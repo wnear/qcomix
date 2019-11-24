@@ -1,0 +1,7 @@
+[Desktop Entry]
+Exec=qcomix
+Name=qcomix
+Icon=qcomix
+Type=Application
+Categories=Graphics
+MimeType=application/x-cbz;application/x-ext-cbz;application/zip;application/vnd.comicbook+zip;inode/directory;

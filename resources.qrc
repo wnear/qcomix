@@ -1,0 +1,23 @@
+<RCC>
+    <qresource prefix="/">
+        <file>default.conf</file>
+        <file>checked.png</file>
+        <file>unchecked.png</file>
+        <file>default.css</file>
+        <file>icon.png</file>
+        <file>first-page.svg</file>
+        <file>fit-best.svg</file>
+        <file>fit-height.svg</file>
+        <file>fit-manual-zoom.svg</file>
+        <file>fit-width.svg</file>
+        <file>go-to-page.svg</file>
+        <file>last-page.svg</file>
+        <file>next-archive.svg</file>
+        <file>next-page.svg</file>
+        <file>prev-archive.svg</file>
+        <file>prev-page.svg</file>
+        <file>LICENSE.txt</file>
+        <file>fit-original-size.svg</file>
+        <file>fit-fixed-size.svg</file>
+    </qresource>
+</RCC>

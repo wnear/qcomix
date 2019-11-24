@@ -1,0 +1,129 @@
+QWidget {
+    color: #aeaeae;
+    background-color: #474747;
+    border-color: #383838;
+}
+
+QWidget:disabled {
+    color: #acacac;
+    background-color: #404040;
+    border-color: #383838;
+}
+
+QWidget:item:selected
+{
+    background-color: #53728e;
+}
+
+QMenu
+{
+    border: 1px;
+    border-style: solid;
+    background-color: #3c3c3c;
+}
+
+QMenu:disabled
+{
+    color: #606060;
+}
+
+QMenu::item
+{
+    padding: 4px 20px 4px 20px;
+}
+
+QMenu::indicator:non-exclusive:unchecked
+{
+    image:url(:/unchecked.png);
+    width:14px;
+    height:14px;
+    background-color: #3c3c3c;
+    border-style: none;
+    padding: 4px 2px 2px 2px;
+}
+
+QMenu::indicator:non-exclusive:checked
+{
+    image:url(:/checked.png);
+    width:14px;
+    height:14px;
+    background-color: #3c3c3c;
+    border-style: none;
+    padding: 4px 2px 2px 2px;
+}
+
+QMenu::indicator:exclusive:unchecked
+{
+    image:url(:/unchecked.png);
+    width:14px;
+    height:14px;
+    background-color: #3c3c3c;
+    border-style: none;
+    padding: 4px 2px 2px 2px;
+}
+
+QMenu::indicator:exclusive:checked
+{
+    image:url(:/checked.png);
+    width:14px;
+    height:14px;
+    background-color: #3c3c3c;
+    border-style: none;
+    padding: 4px 2px 2px 2px;
+}
+
+QMenu::indicator:non-exclusive:selected
+{
+    background-color: #53728e;
+}
+
+QMenu::indicator:non-exclusive:selected
+{
+    background-color: #53728e;
+}
+
+QMenu::indicator:exclusive:selected
+{
+    background-color: #53728e;
+}
+
+QMenu::indicator:exclusive:selected
+{
+    background-color: #53728e;
+}
+
+QScrollBar:horizontal {
+    border: 0px;
+    background: #3c3c3c;
+    height: 10px;
+}
+
+QScrollBar:vertical {
+    border: 0px;
+    background: #3c3c3c;
+    width: 10px;
+}
+
+QScrollBar::handle {
+    background: #53728e;
+}
+
+QScrollBar::add-line:horizontal {
+    width: 0px;
+    height: 0px;
+}
+
+QScrollBar::sub-line:horizontal {
+    width: 0px;
+    height: 0px;
+}
+
+QScrollBar::add-line:vertical {
+    width: 0px;
+    height: 0px;
+}
+
+QScrollBar::sub-line:vertical {
+    width: 0px;
+    height: 0px;
+}
