@@ -42,3 +42,5 @@ add_executable(qcomix ${SOURCES} ${FORM_H} ${RCC_SOURCES})
 
 include_directories(${QUAZIP_INCLUDE_DIRS})
 target_link_libraries(qcomix Qt5::Widgets Qt5::Gui ${QUAZIP_LIBRARIES})
+
+install(TARGETS qcomix RUNTIME DESTINATION bin)
