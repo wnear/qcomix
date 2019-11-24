@@ -3,3 +3,4 @@
 * Optimize zip file reading (preloading?)
 * Optimize dynamic background color detection
 * Optimize drawing code
+* OSD/notifications
