@@ -18,7 +18,7 @@ build() {
 
 package() {
  cd "$srcdir/$pkgname"
- make install
+ DESTDIR="$pkgdir" make install
  install -Dm644 "icon.png" "${pkgdir}/usr/share/icons/qcomix.png"
  install -Dm644 "qcomix.desktop" "${pkgdir}/usr/share/applications/qcomix.desktop"
 }
