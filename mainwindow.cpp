@@ -1258,7 +1258,6 @@ void MainWindow::on_actionZoom_out_triggered()
 void MainWindow::on_actionReset_zoom_triggered()
 {
     this->ui->view->resetZoom();
-    this->ui->view->setFitMode(PageViewWidget::stringToFitMode(MainWindow::getOption("fitMode").toString()));
 }
 
 void MainWindow::on_actionStretch_small_images_triggered(bool checked)

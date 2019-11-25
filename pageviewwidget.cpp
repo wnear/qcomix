@@ -162,7 +162,7 @@ void PageViewWidget::resetZoom()
     currentY *= zFactor;
     zoomLevel = 0;
     this->cachedZoomedImage = QImage{};
-    emit this->fitModeChanged(fitMode);
+    //emit this->fitModeChanged(fitMode);
     emit this->pageViewConfigUINeedsToBeUpdated();
     update();
 }
@@ -710,6 +710,7 @@ void PageViewWidget::paintEvent(QPaintEvent *event)
                 painter.setPen(Qt::black);
                 painter.drawRect(mousePos.x()-magnifyingLensSize/2.0, mousePos.y()-magnifyingLensSize/2.0, magnifyingLensSize, magnifyingLensSize);
             }
+            qDebug() << zoomLevel;
         }
     } else
     {
