@@ -157,6 +157,7 @@ void MainWindow::init(const QString &profile, const QString& openFileName)
     expandWidget->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     this->ui->mainToolBar->insertWidget(this->ui->actionBest_fit_mode, expandWidget);
 
+    if(getOption("startMaximized").toBool()) this->showMaximized();
     if(getOption("startFullscreen").toBool()) this->ui->actionFullscreen->toggle();
     if(!getOption("showMenubar").toBool()) this->ui->actionShow_menu->toggle();
     if(!getOption("showToolbar").toBool()) this->ui->actionShow_main_toolbar->toggle();
