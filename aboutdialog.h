@@ -25,19 +25,18 @@ namespace Ui {
 class AboutDialog;
 }
 
-class AboutDialog : public QDialog
-{
+class AboutDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit AboutDialog(QWidget *parent = nullptr);
+    explicit AboutDialog(QWidget* parent = nullptr);
     ~AboutDialog();
 
 private slots:
     void on_closeAboutDialogButton_clicked();
 
 private:
-    Ui::AboutDialog *ui;
+    Ui::AboutDialog* ui;
 };
 
 #endif // ABOUTDIALOG_H

@@ -19,29 +19,25 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef PAGEVIEWWIDGET_H
 #define PAGEVIEWWIDGET_H
 
-#include <QWidget>
-#include <QPixmapCache>
-#include <QMouseEvent>
-#include <QTimer>
 #include "metadata.h"
+#include <QMouseEvent>
+#include <QPixmapCache>
+#include <QTimer>
+#include <QWidget>
 
 class ComicSource;
 
-class PageViewWidget : public QWidget
-{
+class PageViewWidget : public QWidget {
     Q_OBJECT
 public:
-
-    enum class ScrollSource
-    {
+    enum class ScrollSource {
         ArrowKeyScroll,
         WheelScroll,
         SpaceScroll,
         SlideShowScroll
     };
 
-    enum class FitMode
-    {
+    enum class FitMode {
         FitBest,
         OriginalSize,
         FitWidth,
@@ -50,17 +46,14 @@ public:
         FixedSize
     };
 
-    enum class ScrollDirection
-    {
-        Up,
+    enum class ScrollDirection { Up,
         Down,
         Left,
-        Right
-    };
+        Right };
 
     static FitMode stringToFitMode(const QString& str);
 
-    explicit PageViewWidget(QWidget *parent = nullptr);
+    explicit PageViewWidget(QWidget* parent = nullptr);
     void initialize();
     void rotate(int degree);
     void flipHorizontally(bool flip);
@@ -178,9 +171,11 @@ private:
     QPixmapCache pixmapCache;
     FitMode fitMode;
     QString mainViewBackground;
-    bool stretchSmallImages = false, hqTransformMode = false, checkeredBackgroundForTransparency = false,
-    doNotShowFirstPageAsDouble = false, doNotShowWidePageAsDouble = false, keepTransformationOnPageSwitch = false,
-    doublePageMode = false, doublePageModeSingleStep = false;
+    bool stretchSmallImages = false, hqTransformMode = false,
+         checkeredBackgroundForTransparency = false,
+         doNotShowFirstPageAsDouble = false, doNotShowWidePageAsDouble = false,
+         keepTransformationOnPageSwitch = false, doublePageMode = false,
+         doublePageModeSingleStep = false;
     bool smartScroll = false;
     bool currentXWasReset = true;
     bool flipPagesByScrolling = false;

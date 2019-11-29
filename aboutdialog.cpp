@@ -20,26 +20,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "ui_aboutdialog.h"
 #include "version.h"
 
-AboutDialog::AboutDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::AboutDialog)
+AboutDialog::AboutDialog(QWidget* parent)
+    : QDialog(parent)
+    , ui(new Ui::AboutDialog)
 {
     ui->setupUi(this);
     this->ui->aboutTabWidget->setCurrentIndex(0);
     QFile license(":/LICENSE.txt");
-    if(license.open(QFile::ReadOnly))
-    {
+    if (license.open(QFile::ReadOnly)) {
         this->ui->licenseText->setPlainText(license.readAll());
     }
-    this->ui->versionLabel->setText("version "+QString{QCOMIX_VERSION});
+    this->ui->versionLabel->setText("version " + QString { QCOMIX_VERSION });
 }
 
-AboutDialog::~AboutDialog()
-{
-    delete ui;
-}
+AboutDialog::~AboutDialog() { delete ui; }
 
-void AboutDialog::on_closeAboutDialogButton_clicked()
-{
-    this->close();
-}
+void AboutDialog::on_closeAboutDialogButton_clicked() { this->close(); }

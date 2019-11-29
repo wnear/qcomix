@@ -21,15 +21,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QString>
 
-struct ComicMetadata
-{
+struct ComicMetadata {
     bool valid = false;
     QString title;
     QString fileName;
 };
 
-struct PageMetadata
-{
+struct PageMetadata {
     bool valid = false;
     QString fileName;
     QString fileType;

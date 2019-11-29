@@ -16,12 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "mainwindow.h"
 #include "comicsource.h"
+#include "mainwindow.h"
 #include <QApplication>
 #include <QDebug>
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationName("qcomix");
@@ -32,30 +32,25 @@ int main(int argc, char *argv[])
 
     QString openFileName;
     bool skipNext = true;
-    for(const auto& arg: a.arguments())
-    {
-        if(skipNext)
-        {
+    for (const auto& arg : a.arguments()) {
+        if (skipNext) {
             skipNext = false;
             continue;
         }
-        if(arg == "--profile")
-        {
+        if (arg == "--profile") {
             skipNext = true;
             continue;
         }
-        if(!arg.isEmpty())
-        {
+        if (!arg.isEmpty()) {
             openFileName = arg;
             break;
         }
     }
 
-    if(auto idx = a.arguments().indexOf("--profile"); idx != -1 && idx + 1 < a.arguments().length())
-    {
+    if (auto idx = a.arguments().indexOf("--profile");
+        idx != -1 && idx + 1 < a.arguments().length()) {
         w.init(a.arguments().at(idx + 1), openFileName);
-    } else
-    {
+    } else {
         w.init("default", openFileName);
     }
 

@@ -19,43 +19,44 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-#include <QVariant>
-#include <QScrollBar>
+#include "metadata.h"
 #include <QFileSystemModel>
-#include <QSortFilterProxyModel>
-#include <QTreeWidget>
-#include <QKeyEvent>
 #include <QJsonArray>
 #include <QJsonObject>
-#include "metadata.h"
+#include <QKeyEvent>
+#include <QMainWindow>
+#include <QScrollBar>
+#include <QSortFilterProxyModel>
+#include <QTreeWidget>
+#include <QVariant>
 
-namespace Ui
-{
-    class MainWindow;
+namespace Ui {
+class MainWindow;
 }
 
 class ComicSource;
 class QSettings;
 
-class FileSystemFilterProxyModel : public QSortFilterProxyModel
-{
+class FileSystemFilterProxyModel : public QSortFilterProxyModel {
     Q_OBJECT
 
 public:
-    FileSystemFilterProxyModel(QObject *parent = 0) : QSortFilterProxyModel(parent) {}
+    FileSystemFilterProxyModel(QObject* parent = 0)
+        : QSortFilterProxyModel(parent)
+    {
+    }
 
 protected:
-    bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
+    bool filterAcceptsRow(int sourceRow,
+        const QModelIndex& sourceParent) const override;
 };
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
-    void init(const QString& profile, const QString &openFileName);
+    explicit MainWindow(QWidget* parent = nullptr);
+    void init(const QString& profile, const QString& openFileName);
     static int getSavedPositionForFilePath(const QString& id);
     static void savePositionForFilePath(const QString& p, int page);
     void deleteSelectedBookmarks();
@@ -124,16 +125,16 @@ private:
     int maxPageInWindowTitle = 0;
     QString nameInWindowTitle;
     void updateWindowTitle();
-    Ui::MainWindow *ui;
-    QScrollBar * scr_h = nullptr;
-    QScrollBar * scr_v = nullptr;
+    Ui::MainWindow* ui;
+    QScrollBar* scr_h = nullptr;
+    QScrollBar* scr_v = nullptr;
     QFileSystemModel fileSystemModel;
     FileSystemFilterProxyModel fileSystemFilterModel;
     bool prevMenuVisible = false;
     bool prevToolBarVisible = false;
     bool prevSidePanelVisible = false;
     bool prevScrollBarsVisible = false;
-    void saveBookmarks(const QJsonArray &bookmarks);
+    void saveBookmarks(const QJsonArray& bookmarks);
     void loadBookmarks();
     void loadRecentFiles();
     void addToRecentFiles(const QString& path);
@@ -141,7 +142,7 @@ private:
     void saveRecentFiles();
     QString readLastViewedFilePath();
     void saveLastViewedFilePath(const QString& p);
-    void updateBookmarkSideBar(const QJsonArray &bookmarks);
+    void updateBookmarkSideBar(const QJsonArray& bookmarks);
     void rebuildOpenImageWithMenu();
     void rebuildOpenWithMenu(ComicSource* src);
     void rebuildOpenMenu(QAction* action, const QStringList& strList, bool image);
@@ -156,24 +157,24 @@ public:
     static QVariant getOption(const QString& key);
     static QSettings* userProfile;
     static QSettings* defaultSettings;
-    static QColor getMostCommonEdgeColor(const QPixmap& left_pixmap, const QPixmap& right_pixmap);
+    static QColor getMostCommonEdgeColor(const QPixmap& left_pixmap,
+        const QPixmap& right_pixmap);
 };
 
-class BookmarksTreeWidgetEventFilter : public QObject
-{
+class BookmarksTreeWidgetEventFilter : public QObject {
     Q_OBJECT
 
 public:
-    BookmarksTreeWidgetEventFilter(MainWindow* window) : window(window) {}
-    virtual bool eventFilter(QObject *target, QEvent *event) override
+    BookmarksTreeWidgetEventFilter(MainWindow* window)
+        : window(window)
     {
-        if(auto tree = dynamic_cast<QTreeWidget*>(target))
-        {
-            if (event->type() == QEvent::KeyPress)
-            {
+    }
+    virtual bool eventFilter(QObject* target, QEvent* event) override
+    {
+        if (auto tree = dynamic_cast<QTreeWidget*>(target)) {
+            if (event->type() == QEvent::KeyPress) {
                 auto keyEv = static_cast<QKeyEvent*>(event);
-                if(keyEv->key() == Qt::Key_Delete)
-                {
+                if (keyEv->key() == Qt::Key_Delete) {
                     window->deleteSelectedBookmarks();
                     return true;
                 }

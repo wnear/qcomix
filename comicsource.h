@@ -19,38 +19,36 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef COMICSOURCE_H
 #define COMICSOURCE_H
 
-#include <QString>
+#include "metadata.h"
 #include <QFileInfoList>
 #include <QPixmap>
 #include <QPixmapCache>
+#include <QString>
 #include <quazipfileinfo.h>
-#include "metadata.h"
 
 class QuaZip;
 class QuaZipFile;
 
-class ComicSource
-{
-    public:
-        ComicSource() {}
-        virtual int getPageCount() const = 0;
-        virtual QPixmap getPage(int pageNum) = 0;
-        virtual QString getPageFilePath(int pageNum) = 0;
-        virtual QString getTitle() const = 0;
-        virtual QString getFilePath() const = 0;
-        virtual QString getPath() const = 0;
-        virtual QString getPageCacheKey(int pageNum) const = 0;
-        virtual ComicSource* nextComic() = 0;
-        virtual ComicSource* previousComic() = 0;
-        virtual bool hasNextComic() = 0;
-        virtual bool hasPreviousComic() = 0;
-        virtual ComicMetadata getComicMetadata() const = 0;
-        virtual PageMetadata getPageMetadata(int pageNum) = 0;
-        virtual ~ComicSource() {}
+class ComicSource {
+public:
+    ComicSource() {}
+    virtual int getPageCount() const = 0;
+    virtual QPixmap getPage(int pageNum) = 0;
+    virtual QString getPageFilePath(int pageNum) = 0;
+    virtual QString getTitle() const = 0;
+    virtual QString getFilePath() const = 0;
+    virtual QString getPath() const = 0;
+    virtual QString getPageCacheKey(int pageNum) const = 0;
+    virtual ComicSource* nextComic() = 0;
+    virtual ComicSource* previousComic() = 0;
+    virtual bool hasNextComic() = 0;
+    virtual bool hasPreviousComic() = 0;
+    virtual ComicMetadata getComicMetadata() const = 0;
+    virtual PageMetadata getPageMetadata(int pageNum) = 0;
+    virtual ~ComicSource() {}
 };
 
-class ZipComicSource final : public ComicSource
-{
+class ZipComicSource final : public ComicSource {
 public:
     ZipComicSource(const QString& path);
     virtual int getPageCount() const override;
@@ -80,8 +78,7 @@ private:
     QPixmapCache pCache;
 };
 
-class DirectoryComicSource final : public ComicSource
-{
+class DirectoryComicSource final : public ComicSource {
 public:
     DirectoryComicSource(const QString& path);
     virtual int getPageCount() const override;

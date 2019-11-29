@@ -16,18 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QDir>
-#include <QMimeDatabase>
+#include "comicsource.h"
 #include <QCollator>
+#include <QDebug>
+#include <QDir>
 #include <QImageReader>
+#include <QMimeDatabase>
+#include <QTemporaryFile>
 #include <algorithm>
 #include <quazip.h>
 #include <quazipfile.h>
-#include <QTemporaryFile>
-#include <QDebug>
-#include "comicsource.h"
 
-DirectoryComicSource::DirectoryComicSource(const QString &path)
+DirectoryComicSource::DirectoryComicSource(const QString& path)
 {
     this->pCache.setCacheLimit(256000);
 
@@ -37,12 +37,9 @@ DirectoryComicSource::DirectoryComicSource(const QString &path)
     auto allFiles = dir.entryInfoList();
     QMimeDatabase mimeDb;
     auto supportedImageFormats = QImageReader::supportedMimeTypes();
-    for(const auto & file : allFiles)
-    {
-        for(const auto& format : supportedImageFormats)
-        {
-            if(mimeDb.mimeTypeForFile(file).inherits(format))
-            {
+    for (const auto& file : allFiles) {
+        for (const auto& format : supportedImageFormats) {
+            if (mimeDb.mimeTypeForFile(file).inherits(format)) {
                 this->fileInfoList.append(file);
                 break;
             }
@@ -52,10 +49,10 @@ DirectoryComicSource::DirectoryComicSource(const QString &path)
     QCollator collator;
     collator.setNumericMode(true);
 
-    std::sort(this->fileInfoList.begin(), this->fileInfoList.end(), [&collator](const QFileInfo &file1, const QFileInfo &file2)
-    {
-        return collator.compare(file1.fileName(), file2.fileName()) < 0;
-    });
+    std::sort(this->fileInfoList.begin(), this->fileInfoList.end(),
+        [&collator](const QFileInfo& file1, const QFileInfo& file2) {
+            return collator.compare(file1.fileName(), file2.fileName()) < 0;
+        });
 }
 
 int DirectoryComicSource::getPageCount() const
@@ -66,11 +63,10 @@ int DirectoryComicSource::getPageCount() const
 QPixmap DirectoryComicSource::getPage(int pageNum)
 {
     QPixmap* cached = nullptr;
-    if(this->pCache.find(this->fileInfoList[pageNum].absoluteFilePath(), cached); cached)
-    {
+    if (this->pCache.find(this->fileInfoList[pageNum].absoluteFilePath(), cached);
+        cached) {
         return cached->copy();
-    } else
-    {
+    } else {
         auto px = QPixmap(this->fileInfoList[pageNum].absoluteFilePath());
         pCache.insert(this->fileInfoList[pageNum].absoluteFilePath(), px);
         return px;
@@ -87,10 +83,7 @@ QString DirectoryComicSource::getTitle() const
     return QFileInfo(this->path).fileName();
 }
 
-QString DirectoryComicSource::getFilePath() const
-{
-    return this->path;
-}
+QString DirectoryComicSource::getFilePath() const { return this->path; }
 
 QString DirectoryComicSource::getPath() const
 {
@@ -109,19 +102,17 @@ bool DirectoryComicSource::hasNextComic()
     return !getNextFilePath().isEmpty();
 }
 
-ComicSource *DirectoryComicSource::previousComic()
+ComicSource* DirectoryComicSource::previousComic()
 {
-    if(auto path = getPrevFilePath(); !path.isEmpty())
-    {
+    if (auto path = getPrevFilePath(); !path.isEmpty()) {
         return createComicSource(path);
     }
     return nullptr;
 }
 
-ComicSource *DirectoryComicSource::nextComic()
+ComicSource* DirectoryComicSource::nextComic()
 {
-    if(auto path = getNextFilePath(); !path.isEmpty())
-    {
+    if (auto path = getNextFilePath(); !path.isEmpty()) {
         return createComicSource(path);
     }
     return nullptr;
@@ -155,9 +146,9 @@ QString DirectoryComicSource::getNextFilePath()
     readNeighborList();
 
     auto length = cachedNeighborList.length();
-    for(int i = 0; i < length - 1; i++)
-    {
-        if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath()) return cachedNeighborList[i+1].absoluteFilePath();
+    for (int i = 0; i < length - 1; i++) {
+        if (cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
+            return cachedNeighborList[i + 1].absoluteFilePath();
     }
 
     return {};
@@ -168,9 +159,9 @@ QString DirectoryComicSource::getPrevFilePath()
     readNeighborList();
 
     auto length = cachedNeighborList.length();
-    for(int i = 1; i < length; i++)
-    {
-        if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath()) return cachedNeighborList[i-1].absoluteFilePath();
+    for (int i = 1; i < length; i++) {
+        if (cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
+            return cachedNeighborList[i - 1].absoluteFilePath();
     }
 
     return {};
@@ -178,37 +169,35 @@ QString DirectoryComicSource::getPrevFilePath()
 
 void DirectoryComicSource::readNeighborList()
 {
-    if(cachedNeighborList.isEmpty())
-    {
-    QDir dir(this->getPath());
-    dir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
+    if (cachedNeighborList.isEmpty()) {
+        QDir dir(this->getPath());
+        dir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
 
-    QCollator collator;
-    collator.setNumericMode(true);
+        QCollator collator;
+        collator.setNumericMode(true);
 
-    cachedNeighborList = dir.entryInfoList();
+        cachedNeighborList = dir.entryInfoList();
 
-    std::sort(cachedNeighborList.begin(), cachedNeighborList.end(), [&collator](const QFileInfo &file1, const QFileInfo &file2)
-    {
-        return collator.compare(file1.fileName(), file2.fileName()) < 0;
-    });
+        std::sort(cachedNeighborList.begin(), cachedNeighborList.end(),
+            [&collator](const QFileInfo& file1, const QFileInfo& file2) {
+                return collator.compare(file1.fileName(), file2.fileName()) < 0;
+            });
     }
 }
 
-ComicSource *createComicSource(const QString &path)
+ComicSource* createComicSource(const QString& path)
 {
-    if(path.isEmpty()) return nullptr;
+    if (path.isEmpty())
+        return nullptr;
 
     auto fileInfo = QFileInfo(path);
-    if(fileInfo.exists())
-    {
-        if(fileInfo.isDir())
-        {
+    if (fileInfo.exists()) {
+        if (fileInfo.isDir()) {
             return new DirectoryComicSource(path);
-        } else
-        {
+        } else {
             QMimeDatabase mimeDb;
-            if(mimeDb.mimeTypeForFile(fileInfo).inherits("application/zip")) return new ZipComicSource(path);
+            if (mimeDb.mimeTypeForFile(fileInfo).inherits("application/zip"))
+                return new ZipComicSource(path);
         }
     }
 
@@ -220,7 +209,7 @@ QString DirectoryComicSource::getPageCacheKey(int pageNum) const
     return "DIRECTORY___" + this->path + QStringLiteral("#!@.-~\\/") + QString::number(pageNum);
 }
 
-ZipComicSource::ZipComicSource(const QString &path)
+ZipComicSource::ZipComicSource(const QString& path)
 {
     this->pCache.setCacheLimit(256000);
 
@@ -228,45 +217,39 @@ ZipComicSource::ZipComicSource(const QString &path)
     this->path = f_inf.absoluteFilePath();
 
     this->zip = new QuaZip(this->path);
-    if(zip->open(QuaZip::mdUnzip))
-    {
+    if (zip->open(QuaZip::mdUnzip)) {
         this->currZipFile = new QuaZipFile(zip);
         auto fInfo = zip->getFileInfoList();
         QMimeDatabase mimeDb;
         auto supportedImageFormats = QImageReader::supportedMimeTypes();
-        for(const auto & file : fInfo)
-        {
+        for (const auto& file : fInfo) {
             bool fileOK = false;
             auto possibleMimes = mimeDb.mimeTypesForFileName(file.name);
-            for(const auto& format : supportedImageFormats)
-            {
-                for(const auto& possibleMime : possibleMimes)
-                {
-                    if(possibleMime.inherits(format))
-                    {
+            for (const auto& format : supportedImageFormats) {
+                for (const auto& possibleMime : possibleMimes) {
+                    if (possibleMime.inherits(format)) {
                         this->fileInfoList.append(file);
                         fileOK = false;
                         break;
                     }
                 }
-                if(fileOK) break;
+                if (fileOK)
+                    break;
             }
         }
 
         QCollator collator;
         collator.setNumericMode(true);
 
-        std::sort(this->fileInfoList.begin(), this->fileInfoList.end(), [&collator](const QuaZipFileInfo &file1, const QuaZipFileInfo &file2)
-        {
-            return collator.compare(file1.name, file2.name) < 0;
-        });
+        std::sort(
+            this->fileInfoList.begin(), this->fileInfoList.end(),
+            [&collator](const QuaZipFileInfo& file1, const QuaZipFileInfo& file2) {
+                return collator.compare(file1.name, file2.name) < 0;
+            });
     }
 }
 
-int ZipComicSource::getPageCount() const
-{
-    return this->fileInfoList.length();
-}
+int ZipComicSource::getPageCount() const { return this->fileInfoList.length(); }
 
 QString ZipComicSource::getPageCacheKey(int pageNum) const
 {
@@ -276,14 +259,11 @@ QString ZipComicSource::getPageCacheKey(int pageNum) const
 QPixmap ZipComicSource::getPage(int pageNum)
 {
     QPixmap* cached = nullptr;
-    if(this->pCache.find(this->fileInfoList[pageNum].name, cached); cached)
-    {
+    if (this->pCache.find(this->fileInfoList[pageNum].name, cached); cached) {
         return cached->copy();
-    } else
-    {
+    } else {
         this->zip->setCurrentFile(this->fileInfoList[pageNum].name);
-        if(this->currZipFile->open(QIODevice::ReadOnly))
-        {
+        if (this->currZipFile->open(QIODevice::ReadOnly)) {
             QPixmap px;
             px.loadFromData(this->currZipFile->readAll());
             pCache.insert(this->fileInfoList[pageNum].name, px);
@@ -291,18 +271,16 @@ QPixmap ZipComicSource::getPage(int pageNum)
             return px;
         }
     }
-    return QPixmap{};
+    return QPixmap {};
 }
 
 QString ZipComicSource::getPageFilePath(int pageNum)
 {
     QTemporaryFile tmp;
     tmp.setAutoRemove(false);
-    if(tmp.open())
-    {
+    if (tmp.open()) {
         this->zip->setCurrentFile(this->fileInfoList[pageNum].name);
-        if(this->currZipFile->open(QIODevice::ReadOnly))
-        {
+        if (this->currZipFile->open(QIODevice::ReadOnly)) {
             tmp.write(this->currZipFile->readAll());
             this->currZipFile->close();
         }
@@ -316,43 +294,29 @@ QString ZipComicSource::getTitle() const
     return QFileInfo(this->path).completeBaseName();
 }
 
-QString ZipComicSource::getFilePath() const
-{
-    return this->path;
-}
+QString ZipComicSource::getFilePath() const { return this->path; }
 
-QString ZipComicSource::getPath() const
-{
-    return QFileInfo(this->path).path();
-}
+QString ZipComicSource::getPath() const { return QFileInfo(this->path).path(); }
 
-ComicSource *ZipComicSource::nextComic()
+ComicSource* ZipComicSource::nextComic()
 {
-    if(auto path = getNextFilePath(); !path.isEmpty())
-    {
+    if (auto path = getNextFilePath(); !path.isEmpty()) {
         return createComicSource(path);
     }
     return nullptr;
 }
 
-ComicSource *ZipComicSource::previousComic()
+ComicSource* ZipComicSource::previousComic()
 {
-    if(auto path = getPrevFilePath(); !path.isEmpty())
-    {
+    if (auto path = getPrevFilePath(); !path.isEmpty()) {
         return createComicSource(path);
     }
     return nullptr;
 }
 
-bool ZipComicSource::hasNextComic()
-{
-    return !getNextFilePath().isEmpty();
-}
+bool ZipComicSource::hasNextComic() { return !getNextFilePath().isEmpty(); }
 
-bool ZipComicSource::hasPreviousComic()
-{
-    return !getPrevFilePath().isEmpty();
-}
+bool ZipComicSource::hasPreviousComic() { return !getPrevFilePath().isEmpty(); }
 
 ComicMetadata ZipComicSource::getComicMetadata() const
 {
@@ -374,8 +338,7 @@ PageMetadata ZipComicSource::getPageMetadata(int pageNum)
     res.fileSize = this->fileInfoList[pageNum].uncompressedSize;
     auto possibleMimes = mdb.mimeTypesForFileName(this->fileInfoList[pageNum].name);
     res.fileType = "unknown";
-    if(possibleMimes.size())
-    {
+    if (possibleMimes.size()) {
         res.fileType = possibleMimes[0].name();
     }
     res.valid = true;
@@ -384,13 +347,11 @@ PageMetadata ZipComicSource::getPageMetadata(int pageNum)
 
 ZipComicSource::~ZipComicSource()
 {
-    if(this->currZipFile)
-    {
+    if (this->currZipFile) {
         this->currZipFile->close();
         this->currZipFile->deleteLater();
     }
-    if(this->zip)
-    {
+    if (this->zip) {
         this->zip->close();
         delete this->zip;
     }
@@ -401,9 +362,9 @@ QString ZipComicSource::getNextFilePath()
     readNeighborList();
 
     auto length = cachedNeighborList.length();
-    for(int i = 0; i < length - 1; i++)
-    {
-        if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath()) return cachedNeighborList[i+1].absoluteFilePath();
+    for (int i = 0; i < length - 1; i++) {
+        if (cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
+            return cachedNeighborList[i + 1].absoluteFilePath();
     }
 
     return {};
@@ -414,9 +375,9 @@ QString ZipComicSource::getPrevFilePath()
     readNeighborList();
 
     auto length = cachedNeighborList.length();
-    for(int i = 1; i < length; i++)
-    {
-        if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath()) return cachedNeighborList[i-1].absoluteFilePath();
+    for (int i = 1; i < length; i++) {
+        if (cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
+            return cachedNeighborList[i - 1].absoluteFilePath();
     }
 
     return {};
@@ -424,26 +385,23 @@ QString ZipComicSource::getPrevFilePath()
 
 void ZipComicSource::readNeighborList()
 {
-    if(cachedNeighborList.isEmpty())
-    {
-    QDir dir(this->getPath());
-    dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+    if (cachedNeighborList.isEmpty()) {
+        QDir dir(this->getPath());
+        dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
 
-    QCollator collator;
-    collator.setNumericMode(true);
+        QCollator collator;
+        collator.setNumericMode(true);
 
-    QMimeDatabase mimeDb;
-    for(const auto& entry: dir.entryInfoList())
-    {
-        if(mimeDb.mimeTypeForFile(entry).inherits("application/zip"))
-        {
-            cachedNeighborList.append(entry);
+        QMimeDatabase mimeDb;
+        for (const auto& entry : dir.entryInfoList()) {
+            if (mimeDb.mimeTypeForFile(entry).inherits("application/zip")) {
+                cachedNeighborList.append(entry);
+            }
         }
-    }
 
-    std::sort(cachedNeighborList.begin(), cachedNeighborList.end(), [&collator](const QFileInfo &file1, const QFileInfo &file2)
-    {
-        return collator.compare(file1.fileName(), file2.fileName()) < 0;
-    });
+        std::sort(cachedNeighborList.begin(), cachedNeighborList.end(),
+            [&collator](const QFileInfo& file1, const QFileInfo& file2) {
+                return collator.compare(file1.fileName(), file2.fileName()) < 0;
+            });
     }
 }
