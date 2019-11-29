@@ -104,6 +104,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     this->ui->bookmarksTreeWidget->setEditTriggers(QTreeWidget::SelectedClicked);
     this->ui->bookmarksTreeWidget->setSelectionMode(QTreeWidget::ExtendedSelection);
     this->ui->bookmarksTreeWidget->installEventFilter(new BookmarksTreeWidgetEventFilter(this));
+    this->ui->sidePanel->setFocusPolicy(Qt::NoFocus);
+    this->ui->mainToolBar->setFocusPolicy(Qt::NoFocus);
 }
 
 void MainWindow::init(const QString &profile, const QString& openFileName)
@@ -617,6 +619,8 @@ void MainWindow::loadComic(ComicSource *src)
         updateWindowTitle();
 
         this->ui->view->setComicSource(src);
+
+        this->ui->view->setFocus(Qt::OtherFocusReason);
 }
 
 void MainWindow::updateWindowTitle()

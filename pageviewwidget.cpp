@@ -809,11 +809,15 @@ void PageViewWidget::keyPressEvent(QKeyEvent *event)
     } else if(event->key() == Qt::Key_Space)
     {
         scrollNext(ScrollSource::SpaceScroll);
+    } else if(event->key() == Qt::Key_Backspace)
+    {
+        scrollPrev(ScrollSource::SpaceScroll);
     }
 }
 
 void PageViewWidget::enterEvent(QEvent *event)
 {
+    this->setFocus(Qt::MouseFocusReason);
     mouseCurrentlyOverWidget = true;
     update();
 }
