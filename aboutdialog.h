@@ -21,22 +21,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QDialog>
 
-namespace Ui {
-class AboutDialog;
+namespace Ui
+{
+    class AboutDialog;
 }
 
-class AboutDialog : public QDialog {
-    Q_OBJECT
+class AboutDialog : public QDialog
+{
+        Q_OBJECT
 
-public:
-    explicit AboutDialog(QWidget* parent = nullptr);
-    ~AboutDialog();
+    public:
+        explicit AboutDialog(QWidget* parent = nullptr);
+        ~AboutDialog();
 
-private slots:
-    void on_closeAboutDialogButton_clicked();
+    private slots:
+        void on_closeAboutDialogButton_clicked();
 
-private:
-    Ui::AboutDialog* ui;
+    private:
+        Ui::AboutDialog* ui;
 };
 
 #endif // ABOUTDIALOG_H

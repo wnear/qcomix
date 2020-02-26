@@ -21,6 +21,31 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QDebug>
 
+void customMsgHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    QByteArray localMsg = msg.toLocal8Bit();
+    const char* file = context.file ? context.file : "";
+    const char* function = context.function ? context.function : "";
+    switch (type)
+    {
+        case QtDebugMsg:
+            fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
+            break;
+        case QtInfoMsg:
+            fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
+            break;
+        case QtWarningMsg:
+            fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
+            break;
+        case QtCriticalMsg:
+            fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
+            break;
+        case QtFatalMsg:
+            fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
+            break;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
@@ -28,29 +53,38 @@ int main(int argc, char* argv[])
     a.setApplicationDisplayName("qcomix");
     a.setQuitOnLastWindowClosed(true);
 
+    //qInstallMessageHandler(&customMsgHandler);
+
     MainWindow w;
 
     QString openFileName;
     bool skipNext = true;
-    for (const auto& arg : a.arguments()) {
-        if (skipNext) {
+    for (const auto& arg : a.arguments())
+    {
+        if (skipNext)
+        {
             skipNext = false;
             continue;
         }
-        if (arg == "--profile") {
+        if (arg == "--profile")
+        {
             skipNext = true;
             continue;
         }
-        if (!arg.isEmpty()) {
+        if (!arg.isEmpty())
+        {
             openFileName = arg;
             break;
         }
     }
 
     if (auto idx = a.arguments().indexOf("--profile");
-        idx != -1 && idx + 1 < a.arguments().length()) {
+            idx != -1 && idx + 1 < a.arguments().length())
+    {
         w.init(a.arguments().at(idx + 1), openFileName);
-    } else {
+    }
+    else
+    {
         w.init("default", openFileName);
     }
 

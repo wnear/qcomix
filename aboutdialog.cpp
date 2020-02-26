@@ -27,12 +27,16 @@ AboutDialog::AboutDialog(QWidget* parent)
     ui->setupUi(this);
     this->ui->aboutTabWidget->setCurrentIndex(0);
     QFile license(":/LICENSE.txt");
-    if (license.open(QFile::ReadOnly)) {
-        this->ui->licenseText->setPlainText(license.readAll());
-    }
+    if (license.open(QFile::ReadOnly)) this->ui->licenseText->setPlainText(license.readAll());
     this->ui->versionLabel->setText("version " + QString { QCOMIX_VERSION });
 }
 
-AboutDialog::~AboutDialog() { delete ui; }
+AboutDialog::~AboutDialog()
+{
+    delete ui;
+}
 
-void AboutDialog::on_closeAboutDialogButton_clicked() { this->close(); }
+void AboutDialog::on_closeAboutDialogButton_clicked()
+{
+    this->close();
+}

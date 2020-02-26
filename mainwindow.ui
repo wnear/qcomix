@@ -53,12 +53,32 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="thumbnailsTab">
         <attribute name="title">
          <string>Thumbnails</string>
         </attribute>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="ThumbnailWidget" name="thumbnails" native="true"/>
+         </item>
+        </layout>
        </widget>
        <widget class="QWidget" name="metadataTab">
         <attribute name="title">
@@ -93,7 +113,7 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>808</width>
+              <width>807</width>
               <height>599</height>
              </rect>
             </property>
@@ -507,6 +527,7 @@
     </property>
     <addaction name="actionOpen"/>
     <addaction name="actionOpen_directory"/>
+    <addaction name="actionHydrus_search_query"/>
     <addaction name="actionRecent"/>
     <addaction name="separator"/>
     <addaction name="actionReload"/>
@@ -1114,6 +1135,11 @@
     <string>Ctrl+F</string>
    </property>
   </action>
+  <action name="actionHydrus_search_query">
+   <property name="text">
+    <string>Hydrus search query...</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -1121,6 +1147,12 @@
    <class>PageViewWidget</class>
    <extends>QWidget</extends>
    <header>pageviewwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ThumbnailWidget</class>
+   <extends>QWidget</extends>
+   <header>thumbnailwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -22,87 +22,124 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "metadata.h"
 #include <QFileInfoList>
 #include <QPixmap>
-#include <QPixmapCache>
 #include <QString>
+#include <QMutex>
 #include <quazipfileinfo.h>
 
 class QuaZip;
 class QuaZipFile;
 
-class ComicSource {
-public:
-    ComicSource() {}
-    virtual int getPageCount() const = 0;
-    virtual QPixmap getPage(int pageNum) = 0;
-    virtual QString getPageFilePath(int pageNum) = 0;
-    virtual QString getTitle() const = 0;
-    virtual QString getFilePath() const = 0;
-    virtual QString getPath() const = 0;
-    virtual QString getPageCacheKey(int pageNum) const = 0;
-    virtual ComicSource* nextComic() = 0;
-    virtual ComicSource* previousComic() = 0;
-    virtual bool hasNextComic() = 0;
-    virtual bool hasPreviousComic() = 0;
-    virtual ComicMetadata getComicMetadata() const = 0;
-    virtual PageMetadata getPageMetadata(int pageNum) = 0;
-    virtual ~ComicSource() {}
+class ComicSource
+{
+    public:
+        ComicSource() {}
+        virtual int getPageCount() const = 0;
+        virtual QPixmap getPagePixmap(int pageNum) = 0;
+        virtual QString getPageFilePath(int pageNum) = 0;
+        virtual QString getTitle() const = 0;
+        virtual QString getFilePath() const = 0;
+        virtual QString getPath() const = 0;
+        virtual QString getID() const = 0;
+        virtual ComicSource* nextComic() = 0;
+        virtual ComicSource* previousComic() = 0;
+        virtual bool hasNextComic() = 0;
+        virtual bool hasPreviousComic() = 0;
+        virtual ComicMetadata getComicMetadata() const = 0;
+        virtual PageMetadata getPageMetadata(int pageNum) = 0;
+        virtual bool ephemeral() const;
+        virtual ~ComicSource() {}
 };
 
-class ZipComicSource final : public ComicSource {
-public:
-    ZipComicSource(const QString& path);
-    virtual int getPageCount() const override;
-    virtual QString getPageCacheKey(int pageNum) const override;
-    virtual QPixmap getPage(int pageNum) override;
-    virtual QString getPageFilePath(int pageNum) override;
-    virtual QString getTitle() const override;
-    virtual QString getFilePath() const override;
-    virtual QString getPath() const override;
-    virtual ComicSource* nextComic() override;
-    virtual ComicSource* previousComic() override;
-    virtual bool hasNextComic() override;
-    virtual bool hasPreviousComic() override;
-    virtual ComicMetadata getComicMetadata() const override;
-    virtual PageMetadata getPageMetadata(int pageNum) override;
-    virtual ~ZipComicSource();
+class ZipComicSource final : public ComicSource
+{
+    public:
+        ZipComicSource(const QString& path);
+        virtual int getPageCount() const override;
+        virtual QPixmap getPagePixmap(int pageNum) override;
+        virtual QString getPageFilePath(int pageNum) override;
+        virtual QString getTitle() const override;
+        virtual QString getFilePath() const override;
+        virtual QString getPath() const override;
+        virtual ComicSource* nextComic() override;
+        virtual ComicSource* previousComic() override;
+        virtual QString getID() const override;
+        virtual bool hasNextComic() override;
+        virtual bool hasPreviousComic() override;
+        virtual ComicMetadata getComicMetadata() const override;
+        virtual PageMetadata getPageMetadata(int pageNum) override;
+        virtual ~ZipComicSource();
 
-private:
-    QString getNextFilePath();
-    QString getPrevFilePath();
-    void readNeighborList();
-    QList<QuaZipFileInfo> fileInfoList;
-    QFileInfoList cachedNeighborList;
-    QuaZip* zip = nullptr;
-    QuaZipFile* currZipFile = nullptr;
-    QString path;
-    QPixmapCache pCache;
+    private:
+        QString getNextFilePath();
+        QString getPrevFilePath();
+        QMutex zipM;
+        void readNeighborList();
+        QList<QuaZipFileInfo> fileInfoList;
+        QFileInfoList cachedNeighborList;
+        QuaZip* zip = nullptr;
+        QuaZipFile* currZipFile = nullptr;
+        QString id;
+        QString path;
 };
 
-class DirectoryComicSource final : public ComicSource {
-public:
-    DirectoryComicSource(const QString& path);
-    virtual int getPageCount() const override;
-    virtual QString getPageCacheKey(int pageNum) const override;
-    virtual QPixmap getPage(int pageNum) override;
-    virtual QString getPageFilePath(int pageNum) override;
-    virtual QString getTitle() const override;
-    virtual QString getFilePath() const override;
-    virtual QString getPath() const override;
-    virtual ComicSource* nextComic() override;
-    virtual ComicSource* previousComic() override;
-    virtual bool hasNextComic() override;
-    virtual bool hasPreviousComic() override;
-    virtual ComicMetadata getComicMetadata() const override;
-    virtual PageMetadata getPageMetadata(int pageNum) override;
+class DirectoryComicSource final : public ComicSource
+{
+    public:
+        DirectoryComicSource(const QString& path);
+        virtual int getPageCount() const override;
+        virtual QPixmap getPagePixmap(int pageNum) override;
+        virtual QString getPageFilePath(int pageNum) override;
+        virtual QString getTitle() const override;
+        virtual QString getFilePath() const override;
+        virtual QString getPath() const override;
+        virtual ComicSource* nextComic() override;
+        virtual ComicSource* previousComic() override;
+        virtual QString getID() const override;
+        virtual bool hasNextComic() override;
+        virtual bool hasPreviousComic() override;
+        virtual ComicMetadata getComicMetadata() const override;
+        virtual PageMetadata getPageMetadata(int pageNum) override;
 
-private:
-    QString getNextFilePath();
-    QString getPrevFilePath();
-    void readNeighborList();
-    QFileInfoList fileInfoList;
-    QFileInfoList cachedNeighborList;
-    QString path;
-    QPixmapCache pCache;
+    private:
+        QString getNextFilePath();
+        QString getPrevFilePath();
+        void readNeighborList();
+        QFileInfoList fileInfoList;
+        QFileInfoList cachedNeighborList;
+        QString path;
+        QString id;
+};
+
+class QNetworkAccessManager;
+
+class HydrusSearchQuerySource final : public ComicSource
+{
+    public:
+        HydrusSearchQuerySource(const QString& path);
+        virtual int getPageCount() const override;
+        virtual QPixmap getPagePixmap(int pageNum) override;
+        virtual QString getPageFilePath(int pageNum) override;
+        virtual QString getTitle() const override;
+        virtual QString getFilePath() const override;
+        virtual QString getPath() const override;
+        virtual ComicSource* nextComic() override;
+        virtual ComicSource* previousComic() override;
+        virtual QString getID() const override;
+        virtual bool hasNextComic() override;
+        virtual bool hasPreviousComic() override;
+        virtual ComicMetadata getComicMetadata() const override;
+        virtual PageMetadata getPageMetadata(int pageNum) override;
+        virtual bool ephemeral() const override;
+        virtual ~HydrusSearchQuerySource();
+
+    private:
+        QJsonDocument doGet(const QString& endpoint, const QMap<QString, QString>& args);
+        QNetworkAccessManager* nam = nullptr;
+        QVector<PageMetadata> data;
+        QString id;
+        QString title;
+        QStringList dbPaths;
+        QStringList filePaths;
 };
 
 ComicSource* createComicSource(const QString& path);

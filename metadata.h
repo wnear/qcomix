@@ -20,17 +20,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define METADATA_H
 
 #include <QString>
+#include <QStringList>
 
-struct ComicMetadata {
+struct ComicMetadata
+{
     bool valid = false;
     QString title;
     QString fileName;
+    QStringList urls;
+    QStringList tags;
 };
 
-struct PageMetadata {
+struct PageMetadata
+{
     bool valid = false;
     QString fileName;
     QString fileType;
+    QStringList urls;
+    QStringList tags;
     int fileSize = 0;
     int width = 0;
     int height = 0;

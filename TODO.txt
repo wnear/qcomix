@@ -1,6 +1,3 @@
-* Write thumbnail sidebar
 * Better mime type detection in zip files
-* Optimize zip file reading (preloading?)
-* Optimize dynamic background color detection
-* Optimize drawing code
-* OSD/notifications
+* Support zip files inside zip files
+* Code cleanup
