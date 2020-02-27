@@ -42,7 +42,7 @@ void ImageCache::addImage(const QPair<QString, int>& key, const QPixmap& img)
     if (!hasKey(key))
     {
         maintain();
-        storage.push_front(imgCacheEntry{.id = key.first, .page = key.second, .data = img});
+        storage.push_front(imgCacheEntry{key.first, key.second, img});
     }
     mut.unlock();
 }

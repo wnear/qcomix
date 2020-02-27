@@ -28,7 +28,6 @@ struct imgCacheEntry
 {
     QString id;
     int page = -1;
-    int time = -1;
     QPixmap data;
 };
 
