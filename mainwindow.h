@@ -85,12 +85,12 @@ class MainWindow : public QMainWindow
         void on_actionShow_menu_toggled(bool arg1);
         void on_actionFit_width_mode_triggered();
         void on_actionNext_page_triggered();
-        void updateWindowIcon(QPixmap page);
+        void updateWindowIcon(const QPixmap &page);
         void on_actionPrevious_page_triggered();
         void on_actionFit_height_mode_triggered();
         void on_actionFit_original_size_mode_triggered();
         void on_actionBest_fit_mode_triggered();
-        void updateArchiveMetadata(ComicMetadata m);
+        void updateArchiveMetadata(const ComicMetadata &m);
         void on_actionManual_zoom_mode_triggered();
         void on_actionClose_comic_triggered();
         void on_actionOpen_directory_triggered();
@@ -166,7 +166,7 @@ class MainWindow : public QMainWindow
         static QJsonObject rememberedPages;
         QStringList recentFiles;
         QList<Thumbnailer*> thumbnailerThreads;
-        ImagePreloader* imagePreloader;
+        ImagePreloader* imagePreloader = nullptr;
         static QSettings* userProfile;
         static QSettings* defaultSettings;
 };

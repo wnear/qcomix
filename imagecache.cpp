@@ -18,10 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "imagecache.h"
 
-ImageCache::ImageCache()
-{
-}
-
 ImageCache& ImageCache::cache()
 {
     static ImageCache cache;
@@ -40,7 +36,7 @@ QPixmap ImageCache::getImage(const QPair<QString, int>& key)
     return {};
 }
 
-void ImageCache::addImage(const QPair<QString, int>& key, QPixmap img)
+void ImageCache::addImage(const QPair<QString, int>& key, const QPixmap& img)
 {
     mut.lock();
     if (!hasKey(key))
@@ -78,10 +74,6 @@ void ImageCache::maintain()
             storage.pop_back();
         }
     }
-}
-
-ThumbCache::ThumbCache()
-{
 }
 
 ThumbCache& ThumbCache::cache()

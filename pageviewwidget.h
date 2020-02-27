@@ -82,7 +82,7 @@ class PageViewWidget : public QWidget
         void archiveMetadataUpdateNeeded(ComicMetadata);
         void imageMetadataUpdateNeeded(PageMetadata, PageMetadata);
         void currentPageChanged(const QString&, int, int);
-        void fitModeChanged(FitMode);
+        void fitModeChanged(PageViewWidget::FitMode);
         void updateHorizontalScrollBar(int, int, int);
         void updateVerticalScrollBar(int, int, int);
         void requestLoadNextComic();
@@ -105,7 +105,7 @@ class PageViewWidget : public QWidget
         void firstPage();
         void toggleSlideShow(bool enabled);
         void setSlideShowSeconds(int seconds);
-        void setFitMode(FitMode mode);
+        void setFitMode(PageViewWidget::FitMode mode);
         void setKeepTransformation(bool keep);
         void setStretchSmallImages(bool stretch);
         void setCheckeredBackgroundForTransparency(bool checkered);
@@ -141,7 +141,7 @@ class PageViewWidget : public QWidget
         void setCurrentPageInternal(int page);
         double calcZoomScaleFactor();
         void resetTransformation(bool force = false);
-        QPixmap getRegionFromCombinedPixmap(const QPixmap& left, const QPixmap& right, int x, int y, int w, int h, const QColor& bkgColor);
+        static QPixmap getRegionFromCombinedPixmap(const QPixmap& left, const QPixmap& right, int x, int y, int w, int h, const QColor& bkgColor);
         void doFullRedraw();
         bool active = false;
         bool updtWindowIcon = false;
@@ -178,7 +178,7 @@ class PageViewWidget : public QWidget
         int fixedSizeWidth = 0;
         int fixedSizeHeight = 0;
         QSize lastDrawnImageFullSize;
-        FitMode fitMode;
+        FitMode fitMode = FitMode::FitBest;
         QString mainViewBackground;
         bool stretchSmallImages = false;
         bool hqTransformMode = false;

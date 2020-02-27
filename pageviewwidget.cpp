@@ -26,7 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QPainter>
 #include <cmath>
 
-#define CHECKERED_IMAGE_SIZE 1500
+constexpr int CHECKERED_IMAGE_SIZE = 1500;
 
 PageViewWidget::FitMode PageViewWidget::stringToFitMode(const QString& str)
 {
@@ -94,7 +94,7 @@ void PageViewWidget::initialize(ThumbnailWidget* w)
     allowFreeDrag = MainWindow::getOption("allowFreeDrag").toBool();
     transparentBackgroundCheckerSize = MainWindow::getOption("checkerBoardPatternSize").toInt();
 
-    QImage tmpCheckeredBkg = QImage(QSize(1500, 1500), QImage::Format_ARGB32);
+    QImage tmpCheckeredBkg = QImage(QSize(CHECKERED_IMAGE_SIZE, CHECKERED_IMAGE_SIZE), QImage::Format_ARGB32);
     tmpCheckeredBkg.fill(Qt::white);
     QPainter painter(&tmpCheckeredBkg);
     for (int i = 0; i < CHECKERED_IMAGE_SIZE / transparentBackgroundCheckerSize; i++)
@@ -1383,8 +1383,7 @@ int PageViewWidget::getAdaptiveScrollPixels(PageViewWidget::ScrollDirection d)
     if (d == ScrollDirection::Up || d == ScrollDirection::Down)
     {
         return (1.0 - adaptiveScrollOverhang) * this->height();
-    }
-    else
+    } else
     {
         return (1.0 - adaptiveScrollOverhang) * this->width();
     }

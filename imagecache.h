@@ -35,10 +35,9 @@ struct imgCacheEntry
 class ImageCache
 {
     public:
-        ImageCache();
         static ImageCache& cache();
         QPixmap getImage(const QPair<QString, int>& key);
-        void addImage(const QPair<QString, int>& key, QPixmap img);
+        void addImage(const QPair<QString, int>& key, const QPixmap &img);
         int hasKey(const QPair<QString, int>& key);
         void initialize(int maxCount);
 
@@ -52,7 +51,6 @@ class ImageCache
 class ThumbCache
 {
     public:
-        ThumbCache();
         static ThumbCache& cache();
         QPixmap getPixmap(const QPair<QString, int>& key);
         void addImage(const QPair<QString, int>& key, QPixmap img);

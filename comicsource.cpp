@@ -209,7 +209,6 @@ ComicSource* createComicSource(const QString& path)
     if (path.isEmpty())
         return nullptr;
 
-    const QString hydrusProtocol = "hydrus://";
     if (path.toLower().startsWith("hydrus://"))
     {
         if (!MainWindow::getOption("enableHydrusIntegration").toBool()) return nullptr;
@@ -393,7 +392,7 @@ PageMetadata ZipComicSource::getPageMetadata(int pageNum)
     res.fileSize = this->fileInfoList[pageNum].uncompressedSize;
     auto possibleMimes = mdb.mimeTypesForFileName(this->fileInfoList[pageNum].name);
     res.fileType = "unknown";
-    if (possibleMimes.size())
+    if (!possibleMimes.empty())
     {
         res.fileType = possibleMimes[0].name();
     }
@@ -519,7 +518,7 @@ HydrusSearchQuerySource::HydrusSearchQuerySource(const QString& path)
             const QSet<QString> supportedHydrusMimes = {"image/jpg", "image/png"};
             const QString sortNamespace = MainWindow::getOption("hydrusResultsSortNamespace").toString() + ":";
             QVector<QPair<QString, PageMetadata>> results;
-            for (const QJsonValue& v : data)
+            for (const auto& v : data)
             {
                 auto obj = v.toObject();
                 if (supportedHydrusMimes.contains(obj["mime"].toString()))
@@ -672,7 +671,7 @@ QJsonDocument HydrusSearchQuerySource::doGet(const QString& endpoint, const QMap
 {
     auto apiURL = QUrl{MainWindow::getOption("hydrusAPIURL").toString() + endpoint};
     QUrlQuery query{apiURL};
-    for (const auto& k : args.keys()) query.addQueryItem(k, args[k]);
+    for (const auto& k : args) query.addQueryItem(k, args[k]);
     apiURL.setQuery(query);
 
     QNetworkRequest req{apiURL};

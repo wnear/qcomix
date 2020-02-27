@@ -51,7 +51,7 @@ class NoEditDelegate : public QStyledItemDelegate
 {
     public:
         NoEditDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
-        virtual QWidget* createEditor(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const
+        virtual QWidget* createEditor(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const override
         {
             return nullptr;
         }
@@ -118,19 +118,19 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     auto userConfigLocation = QStandardPaths::locate(QStandardPaths::AppConfigLocation, profile + ".conf");
     if (QFile::exists(userConfigLocation))
     {
-        this->userProfile = new QSettings(userConfigLocation, QSettings::IniFormat);
+        userProfile = new QSettings(userConfigLocation, QSettings::IniFormat);
     }
-    this->defaultSettings = new QSettings(":/default.conf", QSettings::IniFormat);
+    defaultSettings = new QSettings(":/default.conf", QSettings::IniFormat);
 
     if (auto theme = getOption("theme").toString(); theme != "system")
     {
-        static_cast<QApplication*>(QApplication::instance()) ->setStyle(QStyleFactory::create("fusion"));
+        static_cast<QApplication*>(QApplication::instance())->setStyle(QStyleFactory::create("fusion"));
         if (theme.toLower().endsWith(".css") && QFile::exists(theme))
         {
             QFile f(theme);
             f.open(QFile::ReadOnly);
             QString css(f.readAll());
-            static_cast<QApplication*>(QApplication::instance())->setStyleSheet(css);
+            dynamic_cast<QApplication*>(QApplication::instance())->setStyleSheet(css);
             this->setStyleSheet(css);
         }
         else if (theme == "default")
@@ -138,7 +138,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
             QFile f(":/default.css");
             f.open(QFile::ReadOnly);
             QString css(f.readAll());
-            static_cast<QApplication*>(QApplication::instance())->setStyleSheet(css);
+            dynamic_cast<QApplication*>(QApplication::instance())->setStyleSheet(css);
             this->setStyleSheet(css);
         }
         else qFatal("Invalid theme");
@@ -257,7 +257,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
 
     if (getOption("quitOnEscape").toBool())
     {
-        QShortcut* esc = new QShortcut(Qt::Key_Escape, this);
+        auto esc = new QShortcut(Qt::Key_Escape, this);
         connect(esc, &QShortcut::activated, QApplication::instance(), &QApplication::quit);
         connect(esc, &QShortcut::activatedAmbiguously, QApplication::instance(), &QApplication::quit);
     }
@@ -301,7 +301,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     });
     connect(this->ui->view, &PageViewWidget::requestLoadNextComic, this, &MainWindow::on_actionNext_comic_triggered);
     connect(this->ui->view, &PageViewWidget::requestLoadPrevComic, this, &MainWindow::on_actionPrevious_comic_triggered);
-    connect(this->ui->view, &PageViewWidget::imageMetadataUpdateNeeded, [this](PageMetadata m1, PageMetadata m2)
+    connect(this->ui->view, &PageViewWidget::imageMetadataUpdateNeeded, [this](const PageMetadata & m1, const PageMetadata & m2)
     {
         this->ui->labelim1v2->setVisible(m1.valid);
         this->ui->labelim1v3->setVisible(m1.valid);
@@ -423,7 +423,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     {
         auto filePath = item->text(0);
         auto page = item->text(1).toInt();
-        if (QFileInfo(filePath).exists())
+        if (QFileInfo::exists(filePath))
         {
             if (auto comic = createComicSource(filePath))
             {
@@ -517,7 +517,6 @@ void MainWindow::savePositionForFilePath(const QString& p, int page)
     auto path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation)
                 .first();
     auto fileName = MainWindow::getOption("pageStorageFile").toString();
-    auto filePath = path + "/" + fileName;
 
     QJsonDocument doc;
     doc.setObject(MainWindow::rememberedPages);
@@ -617,7 +616,7 @@ QColor MainWindow::getMostCommonEdgeColor(const QImage& left_img, const QImage& 
     int maxcnt = 0;
     QRgb maxval = 0;
     bool ok = false;
-    for (const auto& k : colorCountMap.keys())
+    for (const auto& k : colorCountMap)
     {
         if (colorCountMap[k] > maxcnt)
         {
@@ -832,7 +831,6 @@ void MainWindow::saveBookmarks(const QJsonArray& bookmarks)
     auto path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation)
                 .first();
     auto fileName = MainWindow::getOption("bookmarksFileName").toString();
-    auto filePath = path + "/" + fileName;
 
     QJsonDocument doc;
     doc.setArray(bookmarks);
@@ -853,7 +851,7 @@ void MainWindow::loadBookmarks()
     auto path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
     auto fileName = MainWindow::getOption("bookmarksFileName").toString();
     auto filePath = path + "/" + fileName;
-    if (!QFileInfo(filePath).exists())
+    if (!QFileInfo::exists(filePath))
     {
         QJsonArray empty;
         QJsonDocument doc;
@@ -902,7 +900,7 @@ void MainWindow::loadRecentFiles()
         auto path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
         auto fileName = MainWindow::getOption("recentFilesStorage").toString();
         auto filePath = path + "/" + fileName;
-        if (!QFileInfo(filePath).exists())
+        if (!QFileInfo::exists(filePath))
         {
             QJsonArray empty;
             QJsonDocument doc;
@@ -926,7 +924,7 @@ void MainWindow::loadRecentFiles()
         QFile f(filePath);
         if (f.open(QFile::ReadOnly))
         {
-            QJsonParseError err;
+            QJsonParseError err{};
             auto doc = QJsonDocument::fromJson(f.readAll(), &err);
             if (err.error == QJsonParseError::NoError)
             {
@@ -974,7 +972,7 @@ void MainWindow::rebuildRecentFilesMenu()
             auto info = QFileInfo(f);
             if (info.exists() || (hydrusEnabled && f.startsWith("hydrus://")))
             {
-                QAction* openRecent = new QAction { this->ui->actionRecent->menu() };
+                auto openRecent = new QAction { this->ui->actionRecent->menu() };
                 openRecent->setText((hydrusEnabled && f.startsWith("hydrus://")) ? f : info.fileName());
                 connect(openRecent, &QAction::triggered, [this, f]()
                 {
@@ -997,7 +995,6 @@ void MainWindow::saveRecentFiles()
         auto path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation)
                     .first();
         auto fileName = MainWindow::getOption("recentFilesStorage").toString();
-        auto filePath = path + "/" + fileName;
 
         QJsonDocument doc;
         doc.setArray(QJsonArray::fromStringList(this->recentFiles));
@@ -1020,7 +1017,7 @@ QString MainWindow::readLastViewedFilePath()
                 .first();
     auto fileName = MainWindow::getOption("lastViewedFileStorage").toString();
     auto filePath = path + "/" + fileName;
-    if (!QFileInfo(filePath).exists())
+    if (!QFileInfo::exists(filePath))
     {
         if (!QDir().mkpath(path))
         {
@@ -1089,7 +1086,7 @@ void MainWindow::updateBookmarkSideBar(const QJsonArray& bookmarks)
     {
         for (int i = 0; i < bsize; i += 3)
         {
-            QTreeWidgetItem* item = new QTreeWidgetItem;
+            auto item = new QTreeWidgetItem{};
             item->setText(0, bookmarks[i].toString());
             item->setText(1, bookmarks[i + 1].toString());
             item->setText(2, bookmarks[i + 2].toString());
@@ -1164,7 +1161,7 @@ void MainWindow::rebuildOpenMenu(QAction* action, const QStringList& strList,
                 else break;
             }
 
-            QAction* openImg = new QAction { action->menu() };
+            auto openImg = new QAction { action->menu() };
             openImg->setText(programName);
             connect(openImg, &QAction::triggered, [this, programName, commandList, image]() mutable
             {
@@ -1217,11 +1214,11 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
 QString getDefaultIconFileName(const QString& iconName)
 {
-    if (QFileInfo(":/" + iconName + ".svg").exists())
+    if (QFileInfo::exists(":/" + iconName + ".svg"))
     {
         return ":/" + iconName + ".svg";
     }
-    if (QFileInfo(":/" + iconName + ".png").exists())
+    if (QFileInfo::exists(":/" + iconName + ".png"))
     {
         return ":/" + iconName + ".png";
     }
@@ -1236,11 +1233,11 @@ QString MainWindow::getIconFileName(const QString& iconName)
     }
     else
     {
-        if (QFileInfo(iconPath + "/" + iconName + ".svg").exists())
+        if (QFileInfo::exists(iconPath + "/" + iconName + ".svg"))
         {
             return iconPath + "/" + iconName + ".svg";
         }
-        if (QFileInfo(iconPath + "/" + iconName + ".png").exists())
+        if (QFileInfo::exists(iconPath + "/" + iconName + ".png"))
         {
             return iconPath + "/" + iconName + ".png";
         }
@@ -1279,7 +1276,7 @@ void MainWindow::on_actionNext_page_triggered()
     this->ui->view->nextPage();
 }
 
-void MainWindow::updateWindowIcon(QPixmap page)
+void MainWindow::updateWindowIcon(const QPixmap& page)
 {
     setWindowIcon(page.scaled(256, 256, Qt::KeepAspectRatio));
 }
@@ -1304,7 +1301,7 @@ void MainWindow::on_actionBest_fit_mode_triggered()
     this->ui->view->setFitMode(PageViewWidget::FitMode::FitBest);
 }
 
-void MainWindow::updateArchiveMetadata(ComicMetadata m)
+void MainWindow::updateArchiveMetadata(const ComicMetadata& m)
 {
     this->ui->amvTitle->setVisible(m.valid);
     this->ui->amvFileName->setVisible(m.valid);
@@ -1368,8 +1365,7 @@ void MainWindow::on_actionGo_to_page_triggered()
     }
 }
 
-bool FileSystemFilterProxyModel::filterAcceptsRow(
-    int sourceRow, const QModelIndex& sourceParent) const
+bool FileSystemFilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
 {
     auto fileInfo = static_cast<QFileSystemModel*>(this->sourceModel())->fileInfo(static_cast<QFileSystemModel*>(this->sourceModel())->index(sourceRow, 0, sourceParent));
     if (fileInfo.isDir()) return true;
@@ -1487,10 +1483,7 @@ void MainWindow::on_actionSet_slideshow_interval_triggered()
     if (ui->view->comicSource())
     {
         bool ok = false;
-        int seconds = QInputDialog::getInt(
-                          this, "Slideshow interval",
-                          "Switch page after this many seconds:", ui->view->slideShowInterval(),
-                          1, 900, 1, &ok);
+        int seconds = QInputDialog::getInt(this, "Slideshow interval", "Switch page after this many seconds:", ui->view->slideShowInterval(), 1, 900, 1, &ok);
         if (ok) ui->view->setSlideShowSeconds(seconds);
     }
 }
@@ -1541,7 +1534,7 @@ void MainWindow::on_actionAdd_bookmark_triggered()
     int page = this->ui->view->currentPage();
     if (auto src = this->ui->view->comicSource(); src && page > 0)
     {
-        QTreeWidgetItem* item = new QTreeWidgetItem;
+        auto item = new QTreeWidgetItem;
         item->setText(0, src->getFilePath());
         item->setText(1, QString::number(page));
         item->setText(2, src->getTitle());
