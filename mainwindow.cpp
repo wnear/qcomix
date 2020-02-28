@@ -616,7 +616,7 @@ QColor MainWindow::getMostCommonEdgeColor(const QImage& left_img, const QImage& 
     int maxcnt = 0;
     QRgb maxval = 0;
     bool ok = false;
-    for (const auto& k : colorCountMap)
+    for (const auto& k : colorCountMap.keys())
     {
         if (colorCountMap[k] > maxcnt)
         {

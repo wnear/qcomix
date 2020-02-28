@@ -664,8 +664,7 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
         QColor finalBkgColor;
         if (mainViewBackground == "dynamic")
         {
-            painter.fillRect(painter.viewport(),
-                             this->palette().color(QPalette::Window));
+            painter.fillRect(painter.viewport(), this->palette().color(QPalette::Window));
             if (dynamicBackground.isValid())
             {
                 painter.fillRect(painter.viewport(), dynamicBackground);
@@ -710,7 +709,7 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
                 }
             }
 
-            if (imgCache[cacheKey::leftPageTransformed].isNull())
+            if (imgCache[cacheKey::leftPageTransformed].isNull() || (!dynamicBackground.isValid() && mainViewBackground == "dynamic"))
             {
                 QTransform transform;
                 transform.rotate(rotationDegree);
