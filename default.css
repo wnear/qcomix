@@ -1,7 +1,11 @@
-QWidget {
+QWidget, QToolTip {
     color: #aeaeae;
     background-color: #474747;
     border-color: #383838;
+}
+
+QToolTip {
+    padding: 2px;
 }
 
 QWidget:disabled {
