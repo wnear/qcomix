@@ -19,6 +19,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifndef VERSION_H
 #define VERSION_H
 
-#define QCOMIX_VERSION "1.0.0-beta3"
+#define QCOMIX_VERSION "1.0-beta4"
 
 #endif // VERSION_H
