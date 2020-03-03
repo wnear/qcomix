@@ -59,6 +59,7 @@ void ThumbnailWidget::initialize()
     thumbnailBorder = MainWindow::getOption("thumbnailBorder").toBool();
     pageNumFontSize = MainWindow::getOption("thumbPageNumFontSize").toInt();
     automaticFixedWidth = MainWindow::getOption("thumbnailSidebarAutomaticWidth").toBool();
+    thumbBorderColor = QColor{MainWindow::getOption("thumbnailBorderColor").toString()};
     QFont f = this->font();
     f.setPointSize(pageNumFontSize);
     this->setFont(f);
@@ -222,10 +223,12 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event)
                 offsetY += thumbSpacing;
                 if (thumbnailBorder)
                 {
+                    painter.setPen(thumbBorderColor);
                     painter.drawRect(offsetX + thumbSpacing + pageNumOffset + (thumbWidth - thumb.width()) / 2.0, offsetY + (thumbHeight - thumb.height()) / 2.0, thumb.width() + 1, thumb.height() + 1);
                     offsetY += 1;
                     painter.drawPixmap(offsetX + thumbSpacing + pageNumOffset + 1 + (thumbWidth - thumb.width()) / 2.0, offsetY + (thumbHeight - thumb.height()) / 2.0, thumb);
                     offsetY += 1;
+                    painter.setPen(Qt::black);
                 }
                 else
                 {

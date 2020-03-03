@@ -81,6 +81,7 @@ class ThumbnailWidget : public QWidget
         bool thumbnailBorder = false;
         QString thumbBkg;
         QColor dynamicBackground;
+        QColor thumbBorderColor;
 };
 
 #endif // THUMBNAILSWIDGET_H
