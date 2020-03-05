@@ -54,14 +54,14 @@ class Thumbnailer : public QThread
         QString thumbLocation;
         bool cacheOnDisk = false;
         bool fastScaling = false;
-        volatile std::atomic_bool stopFlag = false;
+        std::atomic_bool stopFlag = false;
         ComicSource* src = nullptr;
         QMutex waitMutex;
         QMutex workMutex;
         int checkQueue();
         QWaitCondition waitCondition;
         QQueue<int> pageNums;
-        volatile std::atomic_bool exitFlag = false;
+        std::atomic_bool exitFlag = false;
 };
 
 class ImagePreloader : public QThread
@@ -77,7 +77,7 @@ class ImagePreloader : public QThread
     private:
         void preloadPage(int n);
         const int count;
-        volatile std::atomic_bool stopFlag = false;
+        std::atomic_bool stopFlag = false;
         ComicSource* src = nullptr;
         QMutex waitMutex;
         QMutex workMutex;
@@ -85,7 +85,7 @@ class ImagePreloader : public QThread
         int checkQueue();
         QWaitCondition waitCondition;
         QQueue<int> pageNums;
-        volatile std::atomic_bool exitFlag = false;
+        std::atomic_bool exitFlag = false;
 };
 
 #endif // THUMBNAILER_H
