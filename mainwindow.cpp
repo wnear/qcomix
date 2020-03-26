@@ -116,6 +116,21 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
 void MainWindow::init(const QString& profile, const QString& openFileName)
 {
     auto userConfigLocation = QStandardPaths::locate(QStandardPaths::AppConfigLocation, profile + ".conf");
+    if (profile == "default" && !QFile::exists(userConfigLocation))
+    {
+        if(QFile defaultConf{":/default.conf"}; defaultConf.open(QFile::ReadOnly))
+        {
+            if(auto configDir = QStandardPaths::standardLocations(QStandardPaths::AppConfigLocation).first(); QDir{}.mkpath(configDir))
+            {
+                if(auto f = QFile{configDir+"/default.conf"}; f.open(QFile::WriteOnly | QFile::Text))
+                {
+                    userConfigLocation = configDir+"/default.conf";
+                    f.write(defaultConf.readAll());
+                    f.close();
+                }
+            }
+        }
+    }
     if (QFile::exists(userConfigLocation))
     {
         userProfile = new QSettings(userConfigLocation, QSettings::IniFormat);

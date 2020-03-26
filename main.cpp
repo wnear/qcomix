@@ -78,8 +78,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (auto idx = a.arguments().indexOf("--profile");
-            idx != -1 && idx + 1 < a.arguments().length())
+    if (auto idx = a.arguments().indexOf("--profile"); idx != -1 && idx + 1 < a.arguments().length())
     {
         w.init(a.arguments().at(idx + 1), openFileName);
     }
