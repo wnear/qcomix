@@ -31,7 +31,7 @@ QColor contrastColor(const QColor& color)
     // Counting the perceptive luminance - human eye favors green color...
     double luminance = (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 255;
 
-    if (luminance > 0.5)
+    if(luminance > 0.5)
     {
         d = 12; // bright colors - black font
     }
@@ -43,7 +43,8 @@ QColor contrastColor(const QColor& color)
     return QColor(d, d, d);
 }
 
-ThumbnailWidget::ThumbnailWidget(QWidget* parent) : QWidget(parent)
+ThumbnailWidget::ThumbnailWidget(QWidget* parent) :
+    QWidget(parent)
 {
     setMouseTracking(true);
 }
@@ -64,7 +65,7 @@ void ThumbnailWidget::initialize()
     f.setPointSize(pageNumFontSize);
     this->setFont(f);
     pageNumSize = QFontMetrics(font()).boundingRect("999").width() + 4;
-    if (automaticFixedWidth) this->setMinimumWidth(this->getThumbCellWidth());
+    if(automaticFixedWidth) this->setMinimumWidth(this->getThumbCellWidth());
 }
 
 void ThumbnailWidget::setShowPageNumbers(bool show)
@@ -88,7 +89,7 @@ bool ThumbnailWidget::pageNumbersShown() const
 void ThumbnailWidget::setComicSource(ComicSource* src)
 {
     this->comic = src;
-    if (src)
+    if(src)
     {
         pageNumSize = QFontMetrics(font()).boundingRect(QString::number(src->getPageCount())).width() + 4;
     }
@@ -100,7 +101,7 @@ void ThumbnailWidget::setComicSource(ComicSource* src)
     currentY = 0;
     this->setCurrentPage(0);
     this->updateAllowedDisplacement();
-    if (automaticFixedWidth)
+    if(automaticFixedWidth)
     {
         this->setMinimumWidth(this->getThumbCellWidth());
         emit automaticallyResizedSelf(this->width());
@@ -109,12 +110,12 @@ void ThumbnailWidget::setComicSource(ComicSource* src)
 
 void ThumbnailWidget::notifyPageThumbnailAvailable(const QString& srcID, int page)
 {
-    if (comic)
+    if(comic)
     {
         int thumbCellHeight = getThumbCellHeight();
         int visibleThumbRangeStart = currentY / thumbCellHeight;
         int visibleThumbRangeEnd = (currentY + height()) / thumbCellHeight + 1;
-        if (page >= visibleThumbRangeStart && page <= visibleThumbRangeEnd && srcID == comic->getID()) update();
+        if(page >= visibleThumbRangeStart && page <= visibleThumbRangeEnd && srcID == comic->getID()) update();
     }
 }
 
@@ -139,7 +140,7 @@ void ThumbnailWidget::setVerticalScrollPosition(int pos)
 
 void ThumbnailWidget::setCurrentPage(int page)
 {
-    if (page > 0 && std::abs(page - this->currentPage) > 4) emit this->thumbnailerShouldBeRefocused(page);
+    if(page > 0 && std::abs(page - this->currentPage) > 4) emit this->thumbnailerShouldBeRefocused(page);
     this->currentPage = page;
     this->ensurePageVisible(page);
     dynamicBackground = {};
@@ -148,23 +149,23 @@ void ThumbnailWidget::setCurrentPage(int page)
 
 void ThumbnailWidget::paintEvent(QPaintEvent* event)
 {
-    if (active)
+    if(active)
     {
         QPainter painter(this);
 
         ensureDisplacementWithinAllowedBounds();
 
         QColor finalBkg;
-        if (thumbBkg == "dynamic")
+        if(thumbBkg == "dynamic")
         {
             painter.fillRect(painter.viewport(), this->palette().color(QPalette::Window));
-            if (dynamicBackground.isValid())
+            if(dynamicBackground.isValid())
             {
                 painter.fillRect(painter.viewport(), dynamicBackground);
                 finalBkg = dynamicBackground;
             }
         }
-        else if (auto color = QColor(thumbBkg); color.isValid())
+        else if(auto color = QColor(thumbBkg); color.isValid())
         {
             painter.fillRect(painter.viewport(), color);
             finalBkg = color;
@@ -175,7 +176,7 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event)
             finalBkg = this->palette().color(QPalette::Window);
         }
 
-        if (comic)
+        if(comic)
         {
             auto srcID = comic->getID();
             auto width = painter.viewport().width();
@@ -188,9 +189,9 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event)
             int offsetX = width < thumbCellWidth ? -currentX : std::ceil((width - thumbCellWidth) / 2.0);
             int pageNumOffset = showPageNums ? pageNumSize : 0;
 
-            if (currentPage > 0 && !dynamicBackground.isValid() && thumbBkg == "dynamic")
+            if(currentPage > 0 && !dynamicBackground.isValid() && thumbBkg == "dynamic")
             {
-                if (auto img = ThumbCache::cache().getPixmap({comic->getID(), currentPage}); !img.isNull())
+                if(auto img = ThumbCache::cache().getPixmap({comic->getID(), currentPage}); !img.isNull())
                 {
                     dynamicBackground = MainWindow::getMostCommonEdgeColor(img.toImage(), {});
                     painter.fillRect(painter.viewport(), dynamicBackground);
@@ -205,23 +206,23 @@ void ThumbnailWidget::paintEvent(QPaintEvent* event)
             lPainter.drawText(lPainter.viewport(), "...", QTextOption{Qt::AlignCenter});
             lPainter.end();
 
-            for (int i = startIndex; i <= endIndex; i++)
+            for(int i = startIndex; i <= endIndex; i++)
             {
                 QPixmap thumb = ThumbCache::cache().getPixmap({srcID, i});
-                if (thumb.isNull()) thumb = loadingPixmap;
+                if(thumb.isNull()) thumb = loadingPixmap;
 
-                if (i == currentPage - 1)
+                if(i == currentPage - 1)
                 {
                     painter.fillRect(QRectF(0, offsetY, width, thumbCellHeight), finalBkg.darker());
                 }
-                if (showPageNums)
+                if(showPageNums)
                 {
                     painter.setPen(contrastColor(i == currentPage - 1 ? finalBkg.darker() : finalBkg));
                     painter.drawText(QRectF(offsetX, offsetY, pageNumSize, thumbCellHeight), QString::number(i + 1), QTextOption{Qt::AlignCenter});
                 }
                 painter.setPen(Qt::black);
                 offsetY += thumbSpacing;
-                if (thumbnailBorder)
+                if(thumbnailBorder)
                 {
                     painter.setPen(thumbBorderColor);
                     painter.drawRect(offsetX + thumbSpacing + pageNumOffset + (thumbWidth - thumb.width()) / 2.0, offsetY + (thumbHeight - thumb.height()) / 2.0, thumb.width() + 1, thumb.height() + 1);
@@ -256,11 +257,11 @@ void ThumbnailWidget::mousePressEvent(QMouseEvent* event)
 
 void ThumbnailWidget::wheelEvent(QWheelEvent* event)
 {
-    if (event->angleDelta().y() > 0)
+    if(event->angleDelta().y() > 0)
     {
         emit this->prevPageRequested();
     }
-    else if (event->angleDelta().y() < 0)
+    else if(event->angleDelta().y() < 0)
     {
         emit this->nextPageRequested();
     }
@@ -273,17 +274,17 @@ void ThumbnailWidget::resizeEvent(QResizeEvent*)
 
 void ThumbnailWidget::ensureDisplacementWithinAllowedBounds()
 {
-    if (currentX < 0) currentX = 0;
-    if (currentX > allowedXDisplacement) currentX = allowedXDisplacement;
-    if (currentY < 0) currentY = 0;
-    if (currentY > allowedYDisplacement) currentY = allowedYDisplacement;
+    if(currentX < 0) currentX = 0;
+    if(currentX > allowedXDisplacement) currentX = allowedXDisplacement;
+    if(currentY < 0) currentY = 0;
+    if(currentY > allowedYDisplacement) currentY = allowedYDisplacement;
     emit this->updateHorizontalScrollBar(allowedXDisplacement, currentX, this->width(), getThumbCellWidth());
     emit this->updateVerticalScrollBar(allowedYDisplacement, currentY, this->height(), getThumbCellHeight());
 }
 
 void ThumbnailWidget::updateAllowedDisplacement()
 {
-    if (comic)
+    if(comic)
     {
         int thumbCellHeight = getThumbCellHeight();
         allowedYDisplacement = std::max(0, comic->getPageCount() * thumbCellHeight - height());
@@ -299,7 +300,7 @@ void ThumbnailWidget::updateAllowedDisplacement()
 
 void ThumbnailWidget::ensurePageVisible(int page)
 {
-    if (page <= 0)
+    if(page <= 0)
     {
         currentY = 0;
     }
@@ -307,7 +308,7 @@ void ThumbnailWidget::ensurePageVisible(int page)
     {
         int thumbCellHeight = getThumbCellHeight();
         int startY = std::max(0, (page - 1) * thumbCellHeight);
-        if (startY < currentY || startY + thumbCellHeight > currentY + height()) currentY = startY;
+        if(startY < currentY || startY + thumbCellHeight > currentY + height()) currentY = startY;
     }
     updateAllowedDisplacement();
 }

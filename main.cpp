@@ -26,7 +26,7 @@ void customMsgHandler(QtMsgType type, const QMessageLogContext& context, const Q
     QByteArray localMsg = msg.toLocal8Bit();
     const char* file = context.file ? context.file : "";
     const char* function = context.function ? context.function : "";
-    switch (type)
+    switch(type)
     {
         case QtDebugMsg:
             fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
@@ -59,26 +59,26 @@ int main(int argc, char* argv[])
 
     QString openFileName;
     bool skipNext = true;
-    for (const auto& arg : a.arguments())
+    for(const auto& arg: a.arguments())
     {
-        if (skipNext)
+        if(skipNext)
         {
             skipNext = false;
             continue;
         }
-        if (arg == "--profile")
+        if(arg == "--profile")
         {
             skipNext = true;
             continue;
         }
-        if (!arg.isEmpty())
+        if(!arg.isEmpty())
         {
             openFileName = arg;
             break;
         }
     }
 
-    if (auto idx = a.arguments().indexOf("--profile"); idx != -1 && idx + 1 < a.arguments().length())
+    if(auto idx = a.arguments().indexOf("--profile"); idx != -1 && idx + 1 < a.arguments().length())
     {
         w.init(a.arguments().at(idx + 1), openFileName);
     }

@@ -28,17 +28,17 @@ namespace Ui
 
 class AboutDialog : public QDialog
 {
-        Q_OBJECT
+    Q_OBJECT
 
-    public:
-        explicit AboutDialog(QWidget* parent = nullptr);
-        ~AboutDialog();
+public:
+    explicit AboutDialog(QWidget* parent = nullptr);
+    ~AboutDialog();
 
-    private slots:
-        void on_closeAboutDialogButton_clicked();
+private slots:
+    void on_closeAboutDialogButton_clicked();
 
-    private:
-        Ui::AboutDialog* ui;
+private:
+    Ui::AboutDialog* ui;
 };
 
 #endif // ABOUTDIALOG_H

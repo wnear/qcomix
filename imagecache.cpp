@@ -26,9 +26,9 @@ ImageCache& ImageCache::cache()
 
 QPixmap ImageCache::getImage(const QPair<QString, int>& key)
 {
-    for (const auto& s : storage)
+    for(const auto& s: storage)
     {
-        if (s.page == key.second && s.id == key.first)
+        if(s.page == key.second && s.id == key.first)
         {
             return s.data;
         }
@@ -39,7 +39,7 @@ QPixmap ImageCache::getImage(const QPair<QString, int>& key)
 void ImageCache::addImage(const QPair<QString, int>& key, const QPixmap& img)
 {
     mut.lock();
-    if (!hasKey(key))
+    if(!hasKey(key))
     {
         maintain();
         storage.push_front(imgCacheEntry{key.first, key.second, img});
@@ -49,9 +49,9 @@ void ImageCache::addImage(const QPair<QString, int>& key, const QPixmap& img)
 
 int ImageCache::hasKey(const QPair<QString, int>& key)
 {
-    for (const auto& s : storage)
+    for(const auto& s: storage)
     {
-        if (s.page == key.second && s.id == key.first)
+        if(s.page == key.second && s.id == key.first)
         {
             return 2;
         }
@@ -66,9 +66,9 @@ void ImageCache::initialize(int maxCount)
 
 void ImageCache::maintain()
 {
-    if (storage.size() > maxCount)
+    if(storage.size() > maxCount)
     {
-        while (storage.size() > (maxCount * 2) / 3)
+        while(storage.size() > (maxCount * 2) / 3)
         {
             storage.back().data = QPixmap{};
             storage.pop_back();
@@ -85,7 +85,7 @@ ThumbCache& ThumbCache::cache()
 QPixmap ThumbCache::getPixmap(const QPair<QString, int>& key)
 {
     mut.lock();
-    if (storage.count(key))
+    if(storage.count(key))
     {
         auto res = storage.value(key);
         mut.unlock();
@@ -118,9 +118,9 @@ void ThumbCache::initialize(int maxCount)
 
 void ThumbCache::maintain()
 {
-    if (keys.size() > maxCount)
+    if(keys.size() > maxCount)
     {
-        while (keys.size() > (maxCount * 2) / 3)
+        while(keys.size() > (maxCount * 2) / 3)
         {
             storage.remove(keys.front());
             keys.pop_front();

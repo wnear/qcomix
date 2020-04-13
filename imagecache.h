@@ -33,35 +33,35 @@ struct imgCacheEntry
 
 class ImageCache
 {
-    public:
-        static ImageCache& cache();
-        QPixmap getImage(const QPair<QString, int>& key);
-        void addImage(const QPair<QString, int>& key, const QPixmap &img);
-        int hasKey(const QPair<QString, int>& key);
-        void initialize(int maxCount);
+public:
+    static ImageCache& cache();
+    QPixmap getImage(const QPair<QString, int>& key);
+    void addImage(const QPair<QString, int>& key, const QPixmap& img);
+    int hasKey(const QPair<QString, int>& key);
+    void initialize(int maxCount);
 
-    private:
-        void maintain();
-        int maxCount = 0;
-        QVector<imgCacheEntry> storage;
-        QMutex mut;
+private:
+    void maintain();
+    int maxCount = 0;
+    QVector<imgCacheEntry> storage;
+    QMutex mut;
 };
 
 class ThumbCache
 {
-    public:
-        static ThumbCache& cache();
-        QPixmap getPixmap(const QPair<QString, int>& key);
-        void addImage(const QPair<QString, int>& key, QPixmap img);
-        bool hasKey(const QPair<QString, int>& key);
-        void initialize(int maxCount);
-        void maintain();
-        QList<QPair<QString, int>> keys;
+public:
+    static ThumbCache& cache();
+    QPixmap getPixmap(const QPair<QString, int>& key);
+    void addImage(const QPair<QString, int>& key, QPixmap img);
+    bool hasKey(const QPair<QString, int>& key);
+    void initialize(int maxCount);
+    void maintain();
+    QList<QPair<QString, int>> keys;
 
-    private:
-        int maxCount = 0;
-        QMap<QPair<QString, int>, QPixmap> storage;
-        QMutex mut;
+private:
+    int maxCount = 0;
+    QMap<QPair<QString, int>, QPixmap> storage;
+    QMutex mut;
 };
 
 #endif // IMAGECACHE_H
