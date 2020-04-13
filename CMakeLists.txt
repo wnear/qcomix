@@ -31,6 +31,8 @@ set(SOURCES
   imagecache.h
   thumbnailwidget.cpp
   thumbnailwidget.h
+  3rdparty/ksqueezedtextlabel.h
+  3rdparty/ksqueezedtextlabel.cpp
 )
 
 set(FORMS

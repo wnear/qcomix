@@ -115,6 +115,7 @@ void PageViewWidget::initialize(ThumbnailWidget* w)
     if (this->thumbsWidget) this->thumbsWidget->initialize();
 
     emit this->pageViewConfigUINeedsToBeUpdated();
+    emitStatusbarUpdateSignal();
     update();
 }
 
@@ -148,6 +149,7 @@ void PageViewWidget::zoomIn()
     currentY *= 1.1;
     maintainCache(cacheKey::leftPageFitted);
     emit this->pageViewConfigUINeedsToBeUpdated();
+    emitStatusbarUpdateSignal();
     update();
 }
 
@@ -160,6 +162,7 @@ void PageViewWidget::zoomOut()
     currentY *= 1.0 / 1.1;
     maintainCache(cacheKey::leftPageFitted);
     emit this->pageViewConfigUINeedsToBeUpdated();
+    emitStatusbarUpdateSignal();
     update();
 }
 
@@ -171,6 +174,7 @@ void PageViewWidget::resetZoom()
     zoomLevel = 0;
     maintainCache(cacheKey::leftPageFitted);
     emit this->pageViewConfigUINeedsToBeUpdated();
+    emitStatusbarUpdateSignal();
     update();
 }
 
@@ -295,6 +299,7 @@ void PageViewWidget::setFitMode(FitMode mode)
     {
         update();
     }
+    emitStatusbarUpdateSignal();
     emit this->pageViewConfigUINeedsToBeUpdated();
 }
 
@@ -520,6 +525,8 @@ void PageViewWidget::resetTransformation(bool force)
 {
     if (active)
     {
+        lastDrawnLeftHeight = 0;
+        lastDrawnRightHeight = 0;
         if (!keepTransformationOnPageSwitch || force)
         {
             this->rotationDegree = 0;
@@ -904,6 +911,16 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
 
             combined_width = imgCache[cacheKey::leftPageFitted].width() + imgCache[cacheKey::rightPageFitted].width();
             combined_height = std::max(imgCache[cacheKey::leftPageFitted].height(), imgCache[cacheKey::rightPageFitted].height());
+            if(lastDrawnLeftHeight != imgCache[cacheKey::leftPageFitted].height())
+            {
+                lastDrawnLeftHeight = imgCache[cacheKey::leftPageFitted].height();
+                emitStatusbarUpdateSignal();
+            }
+            if(lastDrawnRightHeight != imgCache[cacheKey::rightPageFitted].height())
+            {
+                lastDrawnRightHeight = imgCache[cacheKey::rightPageFitted].height();
+                emitStatusbarUpdateSignal();
+            }
 
             if (int w_diff = width - combined_width; w_diff > 0)
             {
@@ -1420,6 +1437,7 @@ void PageViewWidget::emitImageMetadataChangedSignal()
     {
         emit this->imageMetadataUpdateNeeded(metadata1, metadata2);
     }
+    emitStatusbarUpdateSignal();
 }
 
 void PageViewWidget::setCurrentPageInternal(int page)
@@ -1446,6 +1464,17 @@ void PageViewWidget::setCurrentPageInternal(int page)
 double PageViewWidget::calcZoomScaleFactor()
 {
     return std::pow(1.1, zoomLevel);
+}
+
+void PageViewWidget::emitStatusbarUpdateSignal()
+{
+    auto metadata1 = PageMetadata {};
+    if (comic && comic->getPageCount() > 0 && currPage > 0)
+    {
+        metadata1 = comic->getPageMetadata(currPage - 1);
+    }
+
+    emit this->statusbarUpdate(fitMode, metadata1, mangaMode ? lastDrawnRightHeight : lastDrawnLeftHeight);
 }
 
 QPixmap PageViewWidget::getCheckeredBackground(const int width, const int height)

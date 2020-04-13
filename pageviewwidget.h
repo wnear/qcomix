@@ -88,6 +88,7 @@ class PageViewWidget : public QWidget
         void requestLoadNextComic();
         void requestLoadPrevComic();
         void pageViewConfigUINeedsToBeUpdated();
+        void statusbarUpdate(PageViewWidget::FitMode, const PageMetadata&, int);
 
     public slots:
         void setHorizontalScrollPosition(int pos);
@@ -140,6 +141,7 @@ class PageViewWidget : public QWidget
         void emitImageMetadataChangedSignal();
         void setCurrentPageInternal(int page);
         double calcZoomScaleFactor();
+        void emitStatusbarUpdateSignal();
         void resetTransformation(bool force = false);
         static QPixmap getRegionFromCombinedPixmap(const QPixmap& left, const QPixmap& right, int x, int y, int w, int h, const QColor& bkgColor);
         void doFullRedraw();
@@ -193,6 +195,8 @@ class PageViewWidget : public QWidget
         bool flipPagesByScrolling = false;
         int scrollsRequiredToFlip = 1;
         int magnifyingLensSize = 0;
+        int lastDrawnLeftHeight = 0;
+        int lastDrawnRightHeight = 0;
         double magnificationFactor = 1.0;
         bool smartScrollVFirst = false;
         bool autoOpenNextComic = false;

@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define MAINWINDOW_H
 
 #include "metadata.h"
+#include "3rdparty/ksqueezedtextlabel.h"
 #include <QFileSystemModel>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -127,8 +128,9 @@ class MainWindow : public QMainWindow
         void on_actionMagnifying_lens_triggered(bool checked);
         void exitCleanup();
         void on_actionHydrus_search_query_triggered();
+        void on_actionShow_statusbar_toggled(bool arg1);
 
-    protected:
+protected:
         void closeEvent(QCloseEvent* event) override;
 
     private:
@@ -140,17 +142,21 @@ class MainWindow : public QMainWindow
         int maxPageInWindowTitle = 0;
         QString nameInWindowTitle;
         void updateWindowTitle();
+        void updateStatusbar();
         Ui::MainWindow* ui;
         QScrollBar* scr_h = nullptr;
         QScrollBar* scr_v = nullptr;
         QScrollBar* scr_h_t = nullptr;
         QScrollBar* scr_v_t = nullptr;
+        KSqueezedTextLabel * statusLabel = nullptr;
         QFileSystemModel fileSystemModel;
         FileSystemFilterProxyModel fileSystemFilterModel;
+        QString statusBarTemplate;
         bool prevMenuVisible = false;
         bool prevToolBarVisible = false;
         bool prevSidePanelVisible = false;
         bool prevScrollBarsVisible = false;
+        bool prevStatusbarVisible = false;
         void saveBookmarks(const QJsonArray& bookmarks);
         void loadBookmarks();
         void loadRecentFiles();
@@ -169,6 +175,14 @@ class MainWindow : public QMainWindow
         ImagePreloader* imagePreloader = nullptr;
         static QSettings* userProfile;
         static QSettings* defaultSettings;
+        int statusbarCurrPage = 0;
+        int statusbarPageCnt = 0;
+        int statusbarLastDrawnHeight = 0;
+        QString statusbarTitle;
+        QString statusbarFilename;
+        QString statusbarFilepath;
+        QString statusbarFitMode;
+        PageMetadata statusbarPageMetadata;
 };
 
 class BookmarksTreeWidgetEventFilter : public QObject

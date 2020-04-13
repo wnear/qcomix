@@ -42,6 +42,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QStandardPaths>
 #include <QStyleFactory>
 #include <QStyledItemDelegate>
+#include <cmath>
 
 QSettings* MainWindow::userProfile = nullptr;
 QSettings* MainWindow::defaultSettings = nullptr;
@@ -165,6 +166,11 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     imagePreloader = new ImagePreloader{getOption("preloadedPageCount").toInt(), getOption("enableNearbyPagePreloader").toBool(), this};
     imagePreloader->start();
 
+    this->statusBarTemplate = getOption("statusbarTemplate").toString();
+    statusLabel = new KSqueezedTextLabel{};
+    statusLabel->setTextElideMode(Qt::ElideRight);
+    statusLabel->setMargin(getOption("statusbarLabelMargin").toInt());
+    this->ui->statusBar->addPermanentWidget(statusLabel, 1);
     int thumbnail_thread_count = std::max(1, MainWindow::getOption("thumbnailerThreadCount").toInt());
     int thumbX = getOption("thumbnailWidth").toInt();
     int thumbY = getOption("thumbnailHeight").toInt();
@@ -206,6 +212,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     if (MainWindow::hasOption("shortcutPrevious_comic")) this->ui->actionPrevious_comic->setShortcut(QKeySequence{MainWindow::getOption("shortcutPrevious_comic").toString()});
     if (MainWindow::hasOption("shortcutShow_menu")) this->ui->actionShow_menu->setShortcut(QKeySequence{MainWindow::getOption("shortcutShow_menu").toString()});
     if (MainWindow::hasOption("shortcutShow_main_toolbar")) this->ui->actionShow_main_toolbar->setShortcut(QKeySequence{MainWindow::getOption("shortcutShow_main_toolbar").toString()});
+    if (MainWindow::hasOption("shortcutShow_statusbar")) this->ui->actionShow_statusbar->setShortcut(QKeySequence{MainWindow::getOption("shortcutShow_statusbar").toString()});
     if (MainWindow::hasOption("shortcutAdd_bookmark")) this->ui->actionAdd_bookmark->setShortcut(QKeySequence{MainWindow::getOption("shortcutAdd_bookmark").toString()});
     if (MainWindow::hasOption("shortcutAbout_QComix")) this->ui->actionAbout_QComix->setShortcut(QKeySequence{MainWindow::getOption("shortcutAbout_QComix").toString()});
     if (MainWindow::hasOption("shortcutAbout_Qt")) this->ui->actionAbout_Qt->setShortcut(QKeySequence{MainWindow::getOption("shortcutAbout_Qt").toString()});
@@ -263,6 +270,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     if (getOption("startMaximized").toBool()) this->showMaximized();
     if (getOption("startFullscreen").toBool()) this->ui->actionFullscreen->toggle();
     if (!getOption("showMenubar").toBool()) this->ui->actionShow_menu->toggle();
+    if (!getOption("showStatusbar").toBool()) this->ui->actionShow_statusbar->toggle();
     if (!getOption("showToolbar").toBool()) this->ui->actionShow_main_toolbar->toggle();
     if (!getOption("showSidePanel").toBool()) this->ui->actionShow_side_panels->toggle();
 
@@ -291,6 +299,33 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
         this->ui->actionFit_original_size_mode->setChecked(fitMode == PageViewWidget::FitMode::OriginalSize);
         this->ui->actionFit_to_fixed_size_mode->setChecked(fitMode == PageViewWidget::FitMode::FixedSize);
     });
+    connect(this->ui->view, &PageViewWidget::statusbarUpdate, [this](PageViewWidget::FitMode fitMode, const PageMetadata& metadata, int pageHeight)
+    {
+        switch(fitMode)
+        {
+            case PageViewWidget::FitMode::ManualZoom:
+                statusbarFitMode = "manual zoom";
+                break;
+            case PageViewWidget::FitMode::FitWidth:
+                statusbarFitMode = "fit width";
+                break;
+            case PageViewWidget::FitMode::FitHeight:
+                statusbarFitMode = "fit height";
+                break;
+            case PageViewWidget::FitMode::FitBest:
+                statusbarFitMode = "best fit";
+                break;
+            case PageViewWidget::FitMode::OriginalSize:
+                statusbarFitMode = "original size";
+                break;
+            case PageViewWidget::FitMode::FixedSize:
+                statusbarFitMode = "fixed size";
+                break;
+        }
+        statusbarPageMetadata = metadata;
+        statusbarLastDrawnHeight = pageHeight;
+        updateStatusbar();
+    });
     connect(this->ui->mainToolBar, &QToolBar::visibilityChanged, [this](bool visible)
     {
         if (!visible) this->ui->actionShow_main_toolbar->setChecked(false);
@@ -308,7 +343,13 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
             MainWindow::savePositionForFilePath(filePath, current);
         }
 
+        statusbarFilepath = filePath;
+        statusbarFilename = QFileInfo{filePath}.fileName();
+        statusbarCurrPage = current;
+        statusbarPageCnt = max;
+
         updateWindowTitle();
+        updateStatusbar();
     });
     connect(this->ui->view, &PageViewWidget::currentPageChanged, [this](const QString&, int current, int)
     {
@@ -691,10 +732,12 @@ void MainWindow::on_actionHide_all_toggled(bool arg1)
         prevScrollBarsVisible = this->ui->actionShow_scrollbars->isChecked();
         prevSidePanelVisible = this->ui->actionShow_side_panels->isChecked();
         prevToolBarVisible = this->ui->actionShow_main_toolbar->isChecked();
+        prevStatusbarVisible = this->ui->actionShow_statusbar->isChecked();
         this->ui->actionShow_menu->setChecked(false);
         this->ui->actionShow_main_toolbar->setChecked(false);
         this->ui->actionShow_side_panels->setChecked(false);
         this->ui->actionShow_scrollbars->setChecked(false);
+        this->ui->actionShow_statusbar->setChecked(false);
     }
     else
     {
@@ -702,6 +745,7 @@ void MainWindow::on_actionHide_all_toggled(bool arg1)
         if (prevToolBarVisible && !this->ui->actionShow_main_toolbar->isChecked()) this->ui->actionShow_main_toolbar->toggle();
         if (prevSidePanelVisible && !this->ui->actionShow_side_panels->isChecked()) this->ui->actionShow_side_panels->toggle();
         if (prevScrollBarsVisible && !this->ui->actionShow_scrollbars->isChecked()) this->ui->actionShow_scrollbars->toggle();
+        if (prevStatusbarVisible && !this->ui->actionShow_statusbar->isChecked()) this->ui->actionShow_statusbar->toggle();
     }
 }
 
@@ -746,6 +790,9 @@ void MainWindow::loadComic(ComicSource* src)
         {
             nameInWindowTitle = "qcomix";
         }
+        statusbarFilepath = src->getFilePath();
+        statusbarTitle = src->getTitle();
+        statusbarFilename = QFileInfo{statusbarFilepath}.fileName();
 
         if (getOption("useFirstPageAsWindowIcon").toBool() && src->getPageCount() > 0)
         {
@@ -775,6 +822,10 @@ void MainWindow::loadComic(ComicSource* src)
     {
         nameInWindowTitle = "qcomix";
         setWindowIcon(QIcon(":/icon.png"));
+        statusbarFilepath.clear();
+        statusbarTitle.clear();
+        statusbarCurrPage = 0;
+        statusbarPageCnt = 0;
 
         const QModelIndex rootIndex = fileSystemModel.index("");
         this->ui->fileSystemView->setCurrentIndex(fileSystemFilterModel.mapFromSource(rootIndex));
@@ -787,6 +838,7 @@ void MainWindow::loadComic(ComicSource* src)
     this->rebuildOpenWithMenu(src);
 
     updateWindowTitle();
+    updateStatusbar();
 
     auto oldComic = this->ui->view->setComicSource(src);
 
@@ -839,6 +891,29 @@ void MainWindow::updateWindowTitle()
         title = "qcomix";
     }
     setWindowTitle(title);
+}
+
+void MainWindow::updateStatusbar()
+{
+    if(!this->ui->statusBar->isVisible())
+    {
+        statusLabel->setText({});
+        statusLabel->setToolTip({});
+    }
+    QString newText = statusBarTemplate;
+    newText.replace("%CURRPAGE%", QString::number(statusbarCurrPage))
+            .replace("%PAGECOUNT%", QString::number(statusbarPageCnt))
+            .replace("%FILENAME%", statusbarFilename.isEmpty() ? "no comic loaded" : statusbarFilename)
+            .replace("%FILEPATH%", statusbarFilepath.isEmpty() ? "no comic loaded" : statusbarFilepath)
+            .replace("%TITLE%", statusbarTitle.isEmpty() ? "no comic loaded" : statusbarTitle)
+            .replace("%FITMODE%", statusbarFitMode)
+            .replace("%DIMENSIONS%", QString::number(statusbarPageMetadata.width)+"x"+QString::number(statusbarPageMetadata.height))
+            .replace("%ZOOMPERCENT%", QString::number(statusbarPageMetadata.height > 0 ? std::floor(statusbarLastDrawnHeight/double(statusbarPageMetadata.height) * 100 * 100 + 0.5)/100 : 100)+"%")
+            .replace("%IMGFILENAME%", statusbarPageMetadata.valid ? statusbarPageMetadata.fileName : "no image loaded")
+            .replace("%IMGMIMETYPE%", statusbarPageMetadata.valid ? statusbarPageMetadata.fileType : "n/a")
+            .replace("%IMGFILESIZE%", this->locale().formattedDataSize(statusbarPageMetadata.fileSize));
+    this->statusLabel->setText(newText);
+    this->statusLabel->setToolTip(newText);
 }
 
 void MainWindow::saveBookmarks(const QJsonArray& bookmarks)
@@ -1666,4 +1741,14 @@ bool BookmarksTreeWidgetEventFilter::eventFilter(QObject* target, QEvent* event)
         }
     }
     return false;
+}
+
+void MainWindow::on_actionShow_statusbar_toggled(bool arg1)
+{
+    this->ui->statusBar->setVisible(arg1);
+    if (this->ui->statusBar->isVisible())
+    {
+        this->ui->actionHide_all->setChecked(false);
+        updateStatusbar();
+    }
 }

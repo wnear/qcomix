@@ -113,8 +113,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>807</width>
-              <height>599</height>
+              <width>787</width>
+              <height>549</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_3">
@@ -515,7 +515,7 @@
      <x>0</x>
      <y>0</y>
      <width>870</width>
-     <height>20</height>
+     <height>28</height>
     </rect>
    </property>
    <property name="contextMenuPolicy">
@@ -576,6 +576,7 @@
     <addaction name="actionShow_main_toolbar"/>
     <addaction name="actionShow_side_panels"/>
     <addaction name="actionShow_scrollbars"/>
+    <addaction name="actionShow_statusbar"/>
     <addaction name="actionHide_all"/>
    </widget>
    <widget class="QMenu" name="menuGo">
@@ -658,6 +659,7 @@
    <addaction name="actionFit_to_fixed_size_mode"/>
    <addaction name="actionManual_zoom_mode"/>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOpen">
    <property name="text">
     <string>&amp;Open archive...</string>
@@ -1138,6 +1140,17 @@
   <action name="actionHydrus_search_query">
    <property name="text">
     <string>Hydrus search query...</string>
+   </property>
+  </action>
+  <action name="actionShow_statusbar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show statusbar</string>
    </property>
   </action>
  </widget>
