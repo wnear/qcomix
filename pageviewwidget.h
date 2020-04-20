@@ -88,7 +88,7 @@ signals:
     void requestLoadNextComic();
     void requestLoadPrevComic();
     void pageViewConfigUINeedsToBeUpdated();
-    void statusbarUpdate(PageViewWidget::FitMode, const PageMetadata&, int);
+    void statusbarUpdate(PageViewWidget::FitMode, const PageMetadata&, const PageMetadata&, int, int, bool);
 
 public slots:
     void setHorizontalScrollPosition(int pos);

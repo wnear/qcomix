@@ -301,7 +301,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
         this->ui->actionFit_original_size_mode->setChecked(fitMode == PageViewWidget::FitMode::OriginalSize);
         this->ui->actionFit_to_fixed_size_mode->setChecked(fitMode == PageViewWidget::FitMode::FixedSize);
     });
-    connect(this->ui->view, &PageViewWidget::statusbarUpdate, [this](PageViewWidget::FitMode fitMode, const PageMetadata& metadata, int pageHeight) {
+    connect(this->ui->view, &PageViewWidget::statusbarUpdate, [this](PageViewWidget::FitMode fitMode, const PageMetadata& metadata, const PageMetadata& metadata2, int pageHeight, int pageHeight2, bool swappedLefRight) {
         switch(fitMode)
         {
             case PageViewWidget::FitMode::ManualZoom:
@@ -324,7 +324,10 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
                 break;
         }
         statusbarPageMetadata = metadata;
+        statusbarPageMetadata2 = metadata2;
         statusbarLastDrawnHeight = pageHeight;
+        statusbarLastDrawnHeight2 = pageHeight2;
+        statusbarSwappedLeftRight = swappedLefRight;
         updateStatusbar();
     });
     connect(this->ui->mainToolBar, &QToolBar::visibilityChanged, [this](bool visible) {
@@ -891,17 +894,69 @@ void MainWindow::updateStatusbar()
         statusLabel->setToolTip({});
     }
     QString newText = statusBarTemplate;
+
+    QString imgDimensions, imgZoomPercent, imgFileName, imgMimeType, imgFileSize;
+    if(statusbarSwappedLeftRight)
+    {
+        imgFileSize = this->locale().formattedDataSize(statusbarPageMetadata2.fileSize);
+        imgMimeType = statusbarPageMetadata2.valid ? statusbarPageMetadata2.fileType : "n/a";
+        imgFileName = statusbarPageMetadata2.valid ? statusbarPageMetadata2.fileName : "no image loaded";
+        imgZoomPercent = QString::number(statusbarPageMetadata2.height > 0 ? std::floor(statusbarLastDrawnHeight2 / double(statusbarPageMetadata2.height) * 100 * 100 + 0.5) / 100 : 100) + "%";
+        imgDimensions = QString::number(statusbarPageMetadata2.width) + "x" + QString::number(statusbarPageMetadata2.height);
+    } else
+    {
+        imgFileSize = this->locale().formattedDataSize(statusbarPageMetadata.fileSize);
+        imgMimeType = statusbarPageMetadata.valid ? statusbarPageMetadata.fileType : "n/a";
+        imgFileName = statusbarPageMetadata.valid ? statusbarPageMetadata.fileName : "no image loaded";
+        imgZoomPercent = QString::number(statusbarPageMetadata.height > 0 ? std::floor(statusbarLastDrawnHeight / double(statusbarPageMetadata.height) * 100 * 100 + 0.5) / 100 : 100) + "%";
+        imgDimensions = QString::number(statusbarPageMetadata.width) + "x" + QString::number(statusbarPageMetadata.height);
+    }
     newText.replace("%CURRPAGE%", QString::number(statusbarCurrPage))
       .replace("%PAGECOUNT%", QString::number(statusbarPageCnt))
       .replace("%FILENAME%", statusbarFilename.isEmpty() ? "no comic loaded" : statusbarFilename)
       .replace("%FILEPATH%", statusbarFilepath.isEmpty() ? "no comic loaded" : statusbarFilepath)
       .replace("%TITLE%", statusbarTitle.isEmpty() ? "no comic loaded" : statusbarTitle)
       .replace("%FITMODE%", statusbarFitMode)
-      .replace("%DIMENSIONS%", QString::number(statusbarPageMetadata.width) + "x" + QString::number(statusbarPageMetadata.height))
-      .replace("%ZOOMPERCENT%", QString::number(statusbarPageMetadata.height > 0 ? std::floor(statusbarLastDrawnHeight / double(statusbarPageMetadata.height) * 100 * 100 + 0.5) / 100 : 100) + "%")
-      .replace("%IMGFILENAME%", statusbarPageMetadata.valid ? statusbarPageMetadata.fileName : "no image loaded")
-      .replace("%IMGMIMETYPE%", statusbarPageMetadata.valid ? statusbarPageMetadata.fileType : "n/a")
-      .replace("%IMGFILESIZE%", this->locale().formattedDataSize(statusbarPageMetadata.fileSize));
+      .replace("%DIMENSIONS%", imgDimensions)
+      .replace("%ZOOMPERCENT%", imgZoomPercent)
+      .replace("%IMGFILENAME%", imgFileName)
+      .replace("%IMGMIMETYPE%", imgMimeType)
+      .replace("%IMGFILESIZE%", imgFileSize);
+
+    if(statusbarSwappedLeftRight && statusbarPageMetadata2.valid)
+    {
+        imgFileSize = this->locale().formattedDataSize(statusbarPageMetadata.fileSize);
+        imgMimeType = statusbarPageMetadata.valid ? statusbarPageMetadata.fileType : "n/a";
+        imgFileName = statusbarPageMetadata.valid ? statusbarPageMetadata.fileName : "no image loaded";
+        imgZoomPercent = QString::number(statusbarPageMetadata.height > 0 ? std::floor(statusbarLastDrawnHeight / double(statusbarPageMetadata.height) * 100 * 100 + 0.5) / 100 : 100) + "%";
+        imgDimensions = QString::number(statusbarPageMetadata.width) + "x" + QString::number(statusbarPageMetadata.height);
+    }
+    QString imgDimensions2 = imgDimensions, imgZoomPercent2 = imgZoomPercent, imgFileName2 = imgFileName, imgMimeType2 = imgMimeType, imgFileSize2 = imgFileSize;
+    if(statusbarPageMetadata2.valid)
+    {
+        imgDimensions2 += ", " + QString::number(statusbarPageMetadata2.width) + "x" + QString::number(statusbarPageMetadata2.height);
+        imgZoomPercent2 += ", " + QString::number(statusbarPageMetadata2.height > 0 ? std::floor(statusbarLastDrawnHeight2 / double(statusbarPageMetadata2.height) * 100 * 100 + 0.5) / 100 : 100) + "%";
+        imgFileName2 += ", " + statusbarPageMetadata.fileName;
+        imgFileSize2 += ", " + this->locale().formattedDataSize(statusbarPageMetadata2.fileSize);
+        imgMimeType2 += ", " + statusbarPageMetadata2.fileType;
+        if(statusbarSwappedLeftRight)
+        {
+            newText.replace("%CURRPAGE2%", QString::number(statusbarCurrPage+1)+"-"+QString::number(statusbarCurrPage));
+        } else
+        {
+            newText.replace("%CURRPAGE2%", QString::number(statusbarCurrPage)+"-"+QString::number(statusbarCurrPage+1));
+        }
+    } else
+    {
+        newText.replace("%CURRPAGE2%", QString::number(statusbarCurrPage));
+    }
+
+    newText.replace("%DIMENSIONS2%", imgDimensions2)
+            .replace("%ZOOMPERCENT2%", imgZoomPercent2)
+            .replace("%IMGFILENAME2%", imgFileName2)
+            .replace("%IMGMIMETYPE2%", imgMimeType2)
+            .replace("%IMGFILESIZE2%", imgFileSize2);
+
     this->statusLabel->setText(newText);
     this->statusLabel->setToolTip(newText);
 }

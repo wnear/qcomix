@@ -178,11 +178,14 @@ private:
     int statusbarCurrPage = 0;
     int statusbarPageCnt = 0;
     int statusbarLastDrawnHeight = 0;
+    int statusbarLastDrawnHeight2 = 0;
+    bool statusbarSwappedLeftRight = false;
     QString statusbarTitle;
     QString statusbarFilename;
     QString statusbarFilepath;
     QString statusbarFitMode;
     PageMetadata statusbarPageMetadata;
+    PageMetadata statusbarPageMetadata2;
 };
 
 class BookmarksTreeWidgetEventFilter : public QObject

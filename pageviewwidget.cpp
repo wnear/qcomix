@@ -1467,12 +1467,24 @@ double PageViewWidget::calcZoomScaleFactor()
 void PageViewWidget::emitStatusbarUpdateSignal()
 {
     auto metadata1 = PageMetadata{};
+    auto metadata2 = PageMetadata{};
     if(comic && comic->getPageCount() > 0 && currPage > 0)
     {
         metadata1 = comic->getPageMetadata(currPage - 1);
+        if(doublePageMode && currPage < comic->getPageCount())
+        {
+            if(!currentPageIsSinglePageInDoublePageMode())
+            {
+                metadata2 = comic->getPageMetadata(currPage);
+                if(mangaMode) std::swap(metadata1, metadata2);
+            }
+        }
     }
 
-    emit this->statusbarUpdate(fitMode, metadata1, mangaMode ? lastDrawnRightHeight : lastDrawnLeftHeight);
+    bool swappedLeftRight = mangaMode && doublePageMode && !currentPageIsSinglePageInDoublePageMode();
+    if(swappedLeftRight) std::swap(lastDrawnLeftHeight, lastDrawnRightHeight);
+
+    emit this->statusbarUpdate(fitMode, metadata1, metadata2, lastDrawnLeftHeight, lastDrawnRightHeight, swappedLeftRight);
 }
 
 QPixmap PageViewWidget::getCheckeredBackground(const int width, const int height)
