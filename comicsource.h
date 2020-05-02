@@ -47,6 +47,7 @@ public:
     virtual ComicMetadata getComicMetadata() const = 0;
     virtual PageMetadata getPageMetadata(int pageNum) = 0;
     virtual bool ephemeral() const;
+    virtual int startAtPage() const;
     virtual ~ComicSource() {}
 };
 
@@ -85,7 +86,7 @@ private:
 class DirectoryComicSource final : public ComicSource
 {
 public:
-    DirectoryComicSource(const QString& path);
+    DirectoryComicSource(const QString& filePath);
     virtual int getPageCount() const override;
     virtual QPixmap getPagePixmap(int pageNum) override;
     virtual QString getPageFilePath(int pageNum) override;
@@ -99,6 +100,8 @@ public:
     virtual bool hasPreviousComic() override;
     virtual ComicMetadata getComicMetadata() const override;
     virtual PageMetadata getPageMetadata(int pageNum) override;
+    virtual int startAtPage() const override;
+    static bool fileSupported(const QFileInfo &info);
 
 private:
     QString getNextFilePath();
@@ -108,6 +111,7 @@ private:
     QFileInfoList cachedNeighborList;
     QString path;
     QString id;
+    int startPage = 1;
 };
 
 class QNetworkAccessManager;

@@ -1,7 +1,8 @@
 # 1.0 beta 4
 * Create a default config file if it does not exist
 * Set colors on tooltips too in the default theme
-* Add customizable statusbar
+* Added customizable statusbar
+* When started from the command line with an image path, qcomix now opens the directory and jumps to the image
 
 # 1.0 beta 3
 * Updated README

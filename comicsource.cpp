@@ -38,27 +38,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "imagecache.h"
 #include "mainwindow.h"
 
-DirectoryComicSource::DirectoryComicSource(const QString& path)
+DirectoryComicSource::DirectoryComicSource(const QString& filePath)
 {
-    QDir dir(path);
+    QFileInfo fInfo(filePath);
+
+    auto dir = fInfo.dir();
+
     this->path = dir.absolutePath();
     this->id = QString::fromUtf8(QCryptographicHash::hash(path.toUtf8(), QCryptographicHash::Md5).toHex());
 
     dir.setFilter(QDir::Files | QDir::Hidden);
     auto allFiles = dir.entryInfoList();
-    QMimeDatabase mimeDb;
-    auto supportedImageFormats = QImageReader::supportedMimeTypes();
-    for(const auto& file: allFiles)
-    {
-        for(const auto& format: supportedImageFormats)
-        {
-            if(mimeDb.mimeTypeForFile(file).inherits(format))
-            {
-                this->fileInfoList.append(file);
-                break;
-            }
-        }
-    }
+    for(const auto& file: allFiles) if(fileSupported(file)) this->fileInfoList.append(file);
 
     QCollator collator;
     collator.setNumericMode(true);
@@ -66,6 +57,18 @@ DirectoryComicSource::DirectoryComicSource(const QString& path)
     std::sort(this->fileInfoList.begin(), this->fileInfoList.end(), [&collator](const QFileInfo& file1, const QFileInfo& file2) {
         return collator.compare(file1.fileName(), file2.fileName()) < 0;
     });
+
+    if(!fInfo.isDir())
+    {
+        for(int i = 0; i < this->fileInfoList.size(); i++)
+        {
+            if(fInfo == this->fileInfoList[i])
+            {
+                startPage = i+1;
+                break;
+            }
+        }
+    }
 }
 
 int DirectoryComicSource::getPageCount() const
@@ -155,6 +158,25 @@ PageMetadata DirectoryComicSource::getPageMetadata(int pageNum)
     return res;
 }
 
+int DirectoryComicSource::startAtPage() const
+{
+    return this->startPage;
+}
+
+bool DirectoryComicSource::fileSupported(const QFileInfo& info)
+{
+    static auto supportedFormats = QImageReader::supportedMimeTypes();
+    QMimeDatabase mimeDb;
+    for(const auto& format: supportedFormats)
+    {
+        if(mimeDb.mimeTypeForFile(info).inherits(format))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 QString DirectoryComicSource::getNextFilePath()
 {
     readNeighborList();
@@ -224,7 +246,12 @@ ComicSource* createComicSource(const QString& path)
         {
             QMimeDatabase mimeDb;
             if(mimeDb.mimeTypeForFile(fileInfo).inherits("application/zip"))
+            {
                 return new ZipComicSource(path);
+            } else if(DirectoryComicSource::fileSupported(fileInfo))
+            {
+                return new DirectoryComicSource{path};
+            }
         }
     }
 
@@ -692,4 +719,9 @@ QJsonDocument HydrusSearchQuerySource::doGet(const QString& endpoint, const QMap
 bool ComicSource::ephemeral() const
 {
     return false;
+}
+
+int ComicSource::startAtPage() const
+{
+    return -1;
 }

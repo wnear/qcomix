@@ -413,17 +413,24 @@ ComicSource* PageViewWidget::setComicSource(ComicSource* src)
 
     if(comic)
     {
-        if(MainWindow::getOption("rememberPage").toBool())
+        auto startAtPage = comic->startAtPage();
+        if(startAtPage == -1)
         {
-            auto savedPos = MainWindow::getSavedPositionForFilePath(comic->getFilePath());
-            if(savedPos <= comic->getPageCount() && savedPos > 0)
+            if(MainWindow::getOption("rememberPage").toBool())
             {
-                this->setCurrentPageInternal(savedPos);
+                auto savedPos = MainWindow::getSavedPositionForFilePath(comic->getFilePath());
+                if(savedPos <= comic->getPageCount() && savedPos > 0)
+                {
+                    this->setCurrentPageInternal(savedPos);
+                }
             }
-        }
-        else if(comic->getPageCount() > 0)
+            else if(comic->getPageCount() > 0)
+            {
+                this->setCurrentPageInternal(1);
+            }
+        } else
         {
-            this->setCurrentPageInternal(1);
+            this->setCurrentPageInternal(startAtPage);
         }
 
         emit this->archiveMetadataUpdateNeeded(comic->getComicMetadata());
