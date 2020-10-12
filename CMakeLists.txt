@@ -11,7 +11,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/share/cmake/Modules)
 find_package(Qt5Widgets)
 find_package(Qt5Network)
 find_package(Qt5Gui)
-find_package(QuaZip5)
+find_package(QuaZip-Qt5)
 
 set(SOURCES
   main.cpp
@@ -49,7 +49,6 @@ qt5_add_resources(RCC_SOURCES ${RESOURCES})
 
 add_executable(qcomix ${SOURCES} ${FORM_H} ${RCC_SOURCES})
 
-include_directories(${QUAZIP_INCLUDE_DIRS})
-target_link_libraries(qcomix Qt5::Widgets Qt5::Gui Qt5::Network ${QUAZIP_LIBRARIES})
+target_link_libraries(qcomix Qt5::Widgets Qt5::Gui Qt5::Network QuaZip::QuaZip)
 
 install(TARGETS qcomix RUNTIME DESTINATION bin)
