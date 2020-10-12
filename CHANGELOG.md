@@ -1,3 +1,6 @@
+# 1.0 beta 5
+* Fix compilation with QuaZip 1.x (which is now required)
+
 # 1.0 beta 4
 * Create a default config file if it does not exist
 * Set colors on tooltips too in the default theme
