@@ -709,7 +709,7 @@ QJsonDocument HydrusSearchQuerySource::doGet(const QString& endpoint, const QMap
     if(reply->error())
     {
         QTextStream out(stdout);
-        out << "Network error: " << reply->errorString() << endl;
+        out << "Network error: " << reply->errorString() << Qt::endl;
         return {};
     }
 
