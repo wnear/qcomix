@@ -510,7 +510,7 @@ int MainWindow::getSavedPositionForFilePath(const QString& id)
         auto path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
         auto fileName = MainWindow::getOption("pageStorageFile").toString();
         auto filePath = path + "/" + fileName;
-        if(!QFileInfo(filePath).exists())
+        if(!QFileInfo::exists(filePath))
         {
             QJsonObject empty;
             QJsonDocument doc;
@@ -837,7 +837,7 @@ void MainWindow::loadComic(ComicSource* src)
 
     imagePreloader->stopCurrentWork();
 
-    for(auto t: thumbnailerThreads)
+    for(auto t: std::as_const(thumbnailerThreads))
     {
         t->stopCurrentWork();
     }
@@ -846,7 +846,7 @@ void MainWindow::loadComic(ComicSource* src)
 
     if(src)
     {
-        for(auto t: thumbnailerThreads)
+        for(auto t: std::as_const(thumbnailerThreads))
         {
             t->startWorking(src);
             if(this->ui->view->currentPage() > 6)
@@ -963,8 +963,7 @@ void MainWindow::updateStatusbar()
 
 void MainWindow::saveBookmarks(const QJsonArray& bookmarks)
 {
-    auto path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation)
-                  .first();
+    const QString path = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
     auto fileName = MainWindow::getOption("bookmarksFileName").toString();
 
     QJsonDocument doc;
@@ -1102,7 +1101,7 @@ void MainWindow::rebuildRecentFilesMenu()
         this->ui->actionRecent->setVisible(this->recentFiles.length());
         if(!this->ui->actionRecent->menu()) this->ui->actionRecent->setMenu(new QMenu{});
         this->ui->actionRecent->menu()->clear();
-        for(const auto& f: this->recentFiles)
+        for(const auto& f: std::as_const(this->recentFiles))
         {
             auto info = QFileInfo(f);
             if(info.exists() || (hydrusEnabled && f.startsWith("hydrus://")))
@@ -1684,7 +1683,6 @@ void MainWindow::on_actionAdd_bookmark_triggered()
 void MainWindow::saveBookmarksFromTreeWidget()
 {
     auto itemCount = this->ui->bookmarksTreeWidget->topLevelItemCount();
-    bool fail = false;
     QJsonArray arr;
     for(int i = 0; i < itemCount; i++)
     {
@@ -1693,7 +1691,6 @@ void MainWindow::saveBookmarksFromTreeWidget()
         arr.append(QJsonValue(item->text(1)));
         if(item->text(1).toInt() < 1)
         {
-            fail = true;
             QMessageBox::critical(this, "Error",
                                   "Can't save bookmarks: invalid page number!");
             break;
@@ -1731,7 +1728,7 @@ void MainWindow::on_actionMagnifying_lens_triggered(bool checked)
 
 void MainWindow::exitCleanup()
 {
-    for(auto t: thumbnailerThreads)
+    for(auto t: std::as_const(thumbnailerThreads))
     {
         t->stopCurrentWork();
     }

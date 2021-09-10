@@ -26,7 +26,7 @@ ImageCache& ImageCache::cache()
 
 QPixmap ImageCache::getImage(const QPair<QString, int>& key)
 {
-    for(const auto& s: storage)
+    for(const auto& s: std::as_const(storage))
     {
         if(s.page == key.second && s.id == key.first)
         {
@@ -49,7 +49,7 @@ void ImageCache::addImage(const QPair<QString, int>& key, const QPixmap& img)
 
 int ImageCache::hasKey(const QPair<QString, int>& key)
 {
-    for(const auto& s: storage)
+    for(const auto& s: std::as_const(storage))
     {
         if(s.page == key.second && s.id == key.first)
         {

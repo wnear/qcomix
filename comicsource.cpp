@@ -592,7 +592,7 @@ HydrusSearchQuerySource::HydrusSearchQuerySource(const QString& path)
             for(const auto& r: results)
             {
                 QString pathFragment = "/f" + r.second.fileName.left(2) + "/" + r.second.fileName;
-                for(const auto& dbPath: dbPaths)
+                for(const auto& dbPath: std::as_const(dbPaths))
                 {
                     if(QFile::exists(dbPath + pathFragment))
                     {
