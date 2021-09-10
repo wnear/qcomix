@@ -404,7 +404,6 @@ ComicMetadata ZipComicSource::getComicMetadata() const
 
 PageMetadata ZipComicSource::getPageMetadata(int pageNum)
 {
-    static QMap<int, PageMetadata> metaDataCache;
     if(metaDataCache.count(pageNum)) return metaDataCache[pageNum];
 
     QMimeDatabase mdb;

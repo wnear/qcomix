@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QPixmap>
 #include <QString>
 #include <QMutex>
+#include <QHash>
 #include <quazipfileinfo.h>
 
 class QuaZip;
@@ -81,6 +82,7 @@ private:
     QuaZipFile* currZipFile = nullptr;
     QString id;
     QString path;
+    QHash<int, PageMetadata> metaDataCache;
 };
 
 class DirectoryComicSource final : public ComicSource
