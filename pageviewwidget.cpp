@@ -1384,12 +1384,12 @@ bool PageViewWidget::currentPageIsSinglePageInDoublePageMode()
     if(doublePageMode)
     {
         bool singlePage = currPage == 1 && doNotShowFirstPageAsDouble;
-        if(!singlePage && doNotShowWidePageAsDouble)
+        if(!singlePage && comic && comic->getPageCount() && doNotShowWidePageAsDouble)
         {
             QPixmap img;
             if(img = imgCache.value(cacheKey::leftPageRaw); img.isNull())
             {
-                img = comic->getPagePixmap(currPage - 1);
+                img = currPage == 0 ? comic->getPagePixmap(currPage) : comic->getPagePixmap(currPage - 1);
             }
             singlePage = img.width() > img.height();
         }
