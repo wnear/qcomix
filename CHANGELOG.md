@@ -1,3 +1,7 @@
+# 1.0 beta 6
+* Fix crash if double page mode and manga mode is enabled at startup
+* Fix image metadata sometimes not updating on the statusbar
+
 # 1.0 beta 5
 * Fix compilation with QuaZip 1.x (which is now required)
 
