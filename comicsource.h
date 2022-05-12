@@ -85,6 +85,42 @@ private:
     QHash<int, PageMetadata> metaDataCache;
 };
 
+class MobiComicSource final : public ComicSource
+{
+public:
+    MobiComicSource(const QString& path);
+    virtual int getPageCount() const override;
+    virtual QPixmap getPagePixmap(int pageNum) override;
+    virtual QString getPageFilePath(int pageNum) override;
+    virtual QString getTitle() const override;
+    virtual QString getFilePath() const override;
+    virtual QString getPath() const override;
+    virtual ComicSource* nextComic() override;
+    virtual ComicSource* previousComic() override;
+    virtual QString getID() const override;
+    virtual bool hasNextComic() override;
+    virtual bool hasPreviousComic() override;
+    virtual ComicMetadata getComicMetadata() const override;
+    virtual PageMetadata getPageMetadata(int pageNum) override;
+    virtual ~MobiComicSource();
+
+private:
+    struct mobiMetadata{
+        QString title;
+        QString author;
+    } meta;
+    QString getNextFilePath();
+    QString getPrevFilePath();
+    QMutex zipM;
+    void readNeighborList();
+    QList<unsigned data*> fileList;
+    QFileInfoList cachedNeighborList;
+    QuaZip* zip = nullptr;
+    QuaZipFile* currZipFile = nullptr;
+    QString id;
+    QString path;
+    QHash<int, PageMetadata> metaDataCache;
+};
 class DirectoryComicSource final : public ComicSource
 {
 public:
