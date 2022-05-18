@@ -1,4 +1,5 @@
 #include "comicsource.h"
+#include "mobi.h"
 
 MobiComicSource::MobiComicSource(const QString& path)
     :path(path)

@@ -11,6 +11,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/share/cmake/Modules)
 find_package(Qt5Widgets)
 find_package(Qt5Network)
 find_package(Qt5Gui)
+find_package(Qt5Xml)
 find_package(QuaZip-Qt5)
 
 set(SOURCES
@@ -21,6 +22,7 @@ set(SOURCES
   aboutdialog.h
   comicsource.cpp
   comicsource.h
+  epubcomicsource.cpp
   pageviewwidget.cpp
   pageviewwidget.h
   metadata.h
@@ -49,6 +51,6 @@ qt5_add_resources(RCC_SOURCES ${RESOURCES})
 
 add_executable(qcomix ${SOURCES} ${FORM_H} ${RCC_SOURCES})
 
-target_link_libraries(qcomix Qt5::Widgets Qt5::Gui Qt5::Network QuaZip::QuaZip)
+target_link_libraries(qcomix Qt5::Widgets Qt5::Xml Qt5::Gui Qt5::Network QuaZip::QuaZip mobi)
 
 install(TARGETS qcomix RUNTIME DESTINATION bin)

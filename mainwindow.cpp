@@ -499,7 +499,9 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     }
     else
     {
+        qDebug()<<"load comic...";
         this->loadComic(createComicSource(openFileName));
+        qDebug()<<"load comic, after...";
     }
 }
 
@@ -810,9 +812,7 @@ void MainWindow::loadComic(ComicSource* src)
 
         this->saveLastViewedFilePath(src->getFilePath());
         this->addToRecentFiles(src->getFilePath());
-    }
-    else
-    {
+    } else {
         nameInWindowTitle = "qcomix";
         setWindowIcon(QIcon(":/icon.png"));
         statusbarFilepath.clear();

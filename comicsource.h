@@ -26,6 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QMutex>
 #include <QHash>
 #include <quazipfileinfo.h>
+#include <mobi.h>
 
 class QuaZip;
 class QuaZipFile;
@@ -49,10 +50,16 @@ public:
     virtual PageMetadata getPageMetadata(int pageNum) = 0;
     virtual bool ephemeral() const;
     virtual int startAtPage() const;
+    virtual void resortFiles() {}
     virtual ~ComicSource() {}
 };
 
-class ZipComicSource final : public ComicSource
+class FileComicSource : public ComicSource
+{
+
+};
+
+class ZipComicSource : public ComicSource
 {
 public:
     ZipComicSource(const QString& path);
@@ -71,7 +78,7 @@ public:
     virtual PageMetadata getPageMetadata(int pageNum) override;
     virtual ~ZipComicSource();
 
-private:
+protected:
     QString getNextFilePath();
     QString getPrevFilePath();
     QMutex zipM;
@@ -83,6 +90,14 @@ private:
     QString id;
     QString path;
     QHash<int, PageMetadata> metaDataCache;
+};
+
+class EpubComicSource final : public ZipComicSource
+{
+    public:
+        EpubComicSource(const QString& path);
+        void resortFiles();
+        virtual ~EpubComicSource();
 };
 
 class MobiComicSource final : public ComicSource
@@ -108,17 +123,25 @@ private:
     struct mobiMetadata{
         QString title;
         QString author;
+        QString path;
+        FILE *f;
+        MOBIData *mobi;
+        MOBIRawml *rawml;
     } meta;
+    struct pagefile {
+        QString name;
+        const unsigned char * data;
+        size_t size;
+    };
     QString getNextFilePath();
     QString getPrevFilePath();
     QMutex zipM;
     void readNeighborList();
-    QList<unsigned data*> fileList;
+    QList<pagefile> fileList;
     QFileInfoList cachedNeighborList;
     QuaZip* zip = nullptr;
     QuaZipFile* currZipFile = nullptr;
     QString id;
-    QString path;
     QHash<int, PageMetadata> metaDataCache;
 };
 class DirectoryComicSource final : public ComicSource
