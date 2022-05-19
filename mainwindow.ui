@@ -113,8 +113,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>787</width>
-              <height>549</height>
+              <width>256</width>
+              <height>567</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_3">
@@ -164,7 +164,6 @@
               <widget class="QLabel" name="labelim2v1">
                <property name="font">
                 <font>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -223,7 +222,6 @@
               <widget class="QLabel" name="labelamv2">
                <property name="font">
                 <font>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -336,7 +334,6 @@
               <widget class="QLabel" name="im1vTitle">
                <property name="font">
                 <font>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -515,7 +512,7 @@
      <x>0</x>
      <y>0</y>
      <width>870</width>
-     <height>28</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="contextMenuPolicy">
@@ -1151,6 +1148,14 @@
    </property>
    <property name="text">
     <string>Show statusbar</string>
+   </property>
+  </action>
+  <action name="actionNext_Single_Page">
+   <property name="text">
+    <string>Next Single Page</string>
+   </property>
+   <property name="shortcut">
+    <string>Shift+Right</string>
    </property>
   </action>
  </widget>

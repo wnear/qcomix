@@ -463,6 +463,8 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
         this->ui->view->nextPage();
     });
     connect(this->ui->thumbnails, &ThumbnailWidget::prevPageRequested, this->ui->view, &PageViewWidget::previousPage);
+    connect(this->ui->thumbnails, &ThumbnailWidget::prevPageRequested, this, [](){
+            });
     connect(this->ui->view, &PageViewWidget::pageViewConfigUINeedsToBeUpdated, this, &MainWindow::updateUIState);
     this->ui->bookmarksTreeWidget->header()->setSectionResizeMode(2, QHeaderView::Fixed);
     connect(this->ui->bookmarksTreeWidget, &QTreeWidget::itemChanged, [this](QTreeWidgetItem*, int) {
@@ -499,9 +501,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     }
     else
     {
-        qDebug()<<"load comic...";
         this->loadComic(createComicSource(openFileName));
-        qDebug()<<"load comic, after...";
     }
 }
 

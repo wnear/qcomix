@@ -25,6 +25,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QPainter>
 #include <cmath>
+#include <qnamespace.h>
 
 constexpr int CHECKERED_IMAGE_SIZE = 1500;
 
@@ -70,6 +71,7 @@ void PageViewWidget::initialize(ThumbnailWidget* w)
     doNotShowWidePageAsDouble = MainWindow::getOption("doNotShowWidePageAsDouble").toBool();
     checkeredBackgroundForTransparency = MainWindow::getOption("checkeredBackgroundForTransparency").toBool();
     keepTransformationOnPageSwitch = MainWindow::getOption("keepTransformationOnPageSwitch").toBool();
+    keepTransformationOnPageSwitch = true;
     mangaMode = MainWindow::getOption("mangaMode").toBool();
     slideShowSeconds = MainWindow::getOption("slideShowInterval").toInt();
     slideShowAutoOpenNextComic = MainWindow::getOption("slideShowAutoOpenNextComic").toBool();
@@ -1075,6 +1077,8 @@ void PageViewWidget::wheelEvent(QWheelEvent* event)
 
 void PageViewWidget::keyPressEvent(QKeyEvent* event)
 {
+    bool isSingleStep =!! (event->modifiers()&Qt::ShiftModifier);
+    if(isSingleStep) { this->doublePageModeSingleStep = true; }
     if(event->key() == Qt::Key_Up)
     {
         scrollPrev(ScrollSource::ArrowKeyScroll);
@@ -1099,6 +1103,7 @@ void PageViewWidget::keyPressEvent(QKeyEvent* event)
     {
         scrollPrev(ScrollSource::SpaceScroll);
     }
+    this->doublePageModeSingleStep = false;
 }
 
 void PageViewWidget::enterEvent(QEvent*)
