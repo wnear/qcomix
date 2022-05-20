@@ -5,6 +5,7 @@
 #include "comicsource.h"
 #include <QDomDocument>
 #include <QDomElement>
+#include "helper.h"
 
 int readZipFileToDom(QDomDocument &domfile, QuaZip* zip, const QString& filename)
 {
@@ -37,7 +38,7 @@ EpubComicSource::EpubComicSource(const QString& path):ZipComicSource(path)
         readZipFileToDom(contentPage, this->zip, realRootPath);
         auto item = contentPage.documentElement().firstChildElement("manifest").firstChildElement("item");
 
-        QList<QuaZipFileInfo> li;
+        QStringList imgs;
         while(!item.isNull()){
             if(!item.attribute("id").startsWith("Page")){
                 item = item.nextSiblingElement();
@@ -47,13 +48,19 @@ EpubComicSource::EpubComicSource(const QString& path):ZipComicSource(path)
             QDomDocument htmlPage;
             readZipFileToDom(htmlPage, this->zip, htmlPath);
             QString imgPath = htmlPage.documentElement().firstChildElement("body").firstChildElement().firstChildElement().firstChildElement().attribute("src").mid(3);
-            auto _info = std::find_if(this->fileInfoList.begin(), this->fileInfoList.end(),
-                    [imgPath](QuaZipFileInfo f) { return imgPath == f.name; });
-            if(_info != this->fileInfoList.end()){
-                li.push_back(*_info);
-            }
+            imgs.push_back(imgPath);
             item = item.nextSiblingElement();
         }
+
+        QList<QuaZipFileInfo> li;
+        auto accer = [](QuaZipFileInfo x)->QString{return x.name;};
+        filterWithIndex(this->fileInfoList, li, imgs, accer);
+
+        //for(auto imgPath: imgs) {
+            //auto _info = std::find_if(this->fileInfoList.begin(), this->fileInfoList.end(),
+                    //[imgPath](auto&&  f) { return imgPath == f.name; });
+            //if(_info != this->fileInfoList.end()){ li.push_back(*_info); }
+        //}
         this->fileInfoList.clear();
         this->fileInfoList = li;
     } else {

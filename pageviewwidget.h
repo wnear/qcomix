@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QMouseEvent>
 #include <QTimer>
 #include <QWidget>
+#include <QDebug>
 
 class ComicSource;
 class ThumbnailWidget;
@@ -30,6 +31,8 @@ class ThumbnailWidget;
 class PageViewWidget : public QWidget
 {
     Q_OBJECT
+    
+    Q_PROPERTY( int zoomLevel READ getZoomLevel WRITE setZoomLevel NOTIFY zoomLevelChanged )
 
 public:
     enum class ScrollSource
@@ -57,6 +60,7 @@ public:
     };
 
     static FitMode stringToFitMode(const QString& str);
+    static QString fitmodeToStr(FitMode);
 
     explicit PageViewWidget(QWidget* parent = nullptr);
     void initialize(ThumbnailWidget* w);
@@ -72,12 +76,20 @@ public:
     bool smartScrollEnabled() const;
     bool transformationKept() const;
     bool freeDragAllowed() const;
+    int getZoomLevel()const {return zoomLevel;}
+    void setZoomLevel(int x){zoomLevel=x;}
     int slideShowInterval() const;
     ComicSource* comicSource();
     int currentPage() const;
     QString currentPageFilePath();
+    QString getFitMode() const {
+        return fitmodeToStr(fitMode);
+    }
+
+    void onCustomContextMenuRequested(const QPoint &);
 
 signals:
+    void zoomLevelChanged(int x);
     void windowIconUpdateNeeded(QPixmap);
     void archiveMetadataUpdateNeeded(ComicMetadata);
     void imageMetadataUpdateNeeded(PageMetadata, PageMetadata);
@@ -135,6 +147,7 @@ private:
     void scrollNext(ScrollSource src);
     void scrollPrev(ScrollSource src);
     bool currentPageIsSinglePageInDoublePageMode();
+    bool isSinglePage(int pagenumber);
     int getAdaptiveScrollPixels(ScrollDirection d);
     void fitLeftRightImageToSize(int width, int height, int combined_width, int combined_height, double& leftScaledWidth, double& rightScaledWidth, double& leftScaledHeight, double& rightScaledHeight);
     void ensureDisplacementWithinAllowedBounds();
@@ -180,7 +193,7 @@ private:
     int fixedSizeWidth = 0;
     int fixedSizeHeight = 0;
     QSize lastDrawnImageFullSize;
-    FitMode fitMode = FitMode::FitBest;
+    FitMode fitMode = FitMode::FitHeight;
     QString mainViewBackground;
     bool stretchSmallImages = false;
     bool hqTransformMode = false;

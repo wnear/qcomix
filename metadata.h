@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QString>
 #include <QStringList>
+#include <QMap>
 
 struct ComicMetadata
 {
@@ -29,6 +30,7 @@ struct ComicMetadata
     QString fileName;
     QStringList urls;
     QStringList tags;
+    QMap<QString, QString> attributes;
 };
 
 struct PageMetadata
@@ -38,6 +40,7 @@ struct PageMetadata
     QString fileType;
     QStringList urls;
     QStringList tags;
+    bool isBigPage = false; //mannually double.
     int fileSize = 0;
     int width = 0;
     int height = 0;

@@ -26,6 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QPainter>
 #include <cmath>
 #include <qnamespace.h>
+#include <QMenu>
 
 constexpr int CHECKERED_IMAGE_SIZE = 1500;
 
@@ -45,15 +46,66 @@ PageViewWidget::FitMode PageViewWidget::stringToFitMode(const QString& str)
         return FitMode::FitHeight;
     return FitMode::FitBest;
 }
+QString PageViewWidget::fitmodeToStr(PageViewWidget::FitMode x)
+{
+    QString res;
+    switch(x){
+        case FitMode::FitBest:
+            res = "best";
+            break;
+        case FitMode::OriginalSize:
+            res = "original-size";
+            break;
+        case FitMode::FitWidth:
+            res = "width";
+            break;
+        case FitMode::FitHeight:
+            res = "height";
+            break;
+        case FitMode::ManualZoom:
+            res = "zoom";
+            break;
+        case FitMode::FixedSize:
+            res = "fixed-size";
+            break;
+        default:
+            res = "";
+            break;
+    }
+    return res;
+}
 
 PageViewWidget::PageViewWidget(QWidget* parent) :
     QWidget(parent)
 {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
+    setContextMenuPolicy(Qt::CustomContextMenu);
     connect(&this->slideShowTimer, &QTimer::timeout, [this]() {
         scrollNext(ScrollSource::SlideShowScroll);
     });
+    connect(this, &PageViewWidget::zoomLevelChanged, [this](int val){
+            qDebug()<< "zoom level changed to "<<val;
+            });
+    connect(this, &QWidget::customContextMenuRequested, 
+            this, &PageViewWidget::onCustomContextMenuRequested);
+}
+
+void PageViewWidget::onCustomContextMenuRequested(const QPoint& p)
+{
+    //@TODO: QPonter, 
+    auto *menu = new QMenu;
+    
+    /**
+     * - save to disk
+     * - rotate current.
+     * - set as singlepage.
+     * - single & rotate.
+     * - shortcut to viewmode. //get from mainwindow.
+     * - enhance.
+     * - 
+     */
+    return;
 }
 
 void PageViewWidget::initialize(ThumbnailWidget* w)
@@ -64,6 +116,7 @@ void PageViewWidget::initialize(ThumbnailWidget* w)
     doublePageModeSingleStep = MainWindow::getOption("doublePageModeSingleStep").toBool();
     fitMode = stringToFitMode(MainWindow::getOption("fitMode").toString());
     stretchSmallImages = MainWindow::getOption("stretchSmallImages").toBool();
+    stretchSmallImages = true;
     magnificationFactor = MainWindow::getOption("magnificationFactor").toDouble();
     magnifyingLensSize = MainWindow::getOption("magnifyingLensSize").toInt();
     hqTransformMode = MainWindow::getOption("hqTransformMode").toBool();
@@ -80,6 +133,7 @@ void PageViewWidget::initialize(ThumbnailWidget* w)
     wheelScrollPixels = MainWindow::getOption("wheelScrollPixels").toInt();
     slideShowScrollPixels = MainWindow::getOption("slideShowScrollPixels").toInt();
     autoOpenNextComic = MainWindow::getOption("autoOpenNextComic").toBool();
+    autoOpenNextComic = true;
     arrowKeyScrollPixels = MainWindow::getOption("arrowKeyScrollPixels").toInt();
     magnifyingLensHQScaling = MainWindow::getOption("magnifyingLensHQScaling").toBool();
     smartScroll = MainWindow::getOption("smartScroll").toBool();
@@ -144,8 +198,8 @@ void PageViewWidget::flipVertically(bool flip)
 
 void PageViewWidget::zoomIn()
 {
-    fitMode = FitMode::ManualZoom;
-    emit this->fitModeChanged(FitMode::ManualZoom);
+    //fitMode = FitMode::ManualZoom;
+    //emit this->fitModeChanged(FitMode::ManualZoom);
     zoomLevel++;
     currentX *= 1.1;
     currentY *= 1.1;
@@ -157,8 +211,8 @@ void PageViewWidget::zoomIn()
 
 void PageViewWidget::zoomOut()
 {
-    fitMode = FitMode::ManualZoom;
-    emit this->fitModeChanged(FitMode::ManualZoom);
+    //fitMode = FitMode::ManualZoom;
+    //emit this->fitModeChanged(FitMode::ManualZoom);
     zoomLevel--;
     currentX *= 1.0 / 1.1;
     currentY *= 1.0 / 1.1;
@@ -209,6 +263,7 @@ void PageViewWidget::nextPage(bool slideShow)
     {
         if(doublePageMode && !doublePageModeSingleStep && currPage + 1 < comic->getPageCount() && !currentPageIsSinglePageInDoublePageMode())
         {
+            
             this->setCurrentPageInternal(currPage + 2);
         }
         else
@@ -677,6 +732,7 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
     {
         QPainter painter(this);
 
+        // <<-- 1. calculate background color.
         QColor finalBkgColor;
         if(mainViewBackground == "dynamic")
         {
@@ -697,6 +753,7 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
             painter.fillRect(painter.viewport(), this->palette().color(QPalette::Window));
             finalBkgColor = this->palette().color(QPalette::Window);
         }
+        // >>-- 1. calculate background color. ....end...
 
         if(comic && currPage > 0)
         {
@@ -705,10 +762,9 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
             int targetX = 0;
             int targetY = 0;
 
+            // -- 2. get imgCache[pageRaw] data.
             if(imgCache[cacheKey::leftPageRaw].isNull())
-            {
-                imgCache[cacheKey::leftPageRaw] = comic->getPagePixmap(currPage - 1);
-            }
+            { imgCache[cacheKey::leftPageRaw] = comic->getPagePixmap(currPage - 1); }
 
             bool doublePage = doublePageMode && currPage < comic->getPageCount() && !(currPage == 1 && doNotShowFirstPageAsDouble) && !(imgCache[cacheKey::leftPageRaw].width() > imgCache[cacheKey::leftPageRaw].height() && doNotShowWidePageAsDouble);
             if(doublePage)
@@ -724,6 +780,7 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
                 }
             }
 
+            // -- 3. imgCache[pageTransformed], if rotation and flip needed.
             if(imgCache[cacheKey::leftPageTransformed].isNull() || (!dynamicBackground.isValid() && mainViewBackground == "dynamic"))
             {
                 QTransform transform;
@@ -731,7 +788,8 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
                 transform.scale(horizontalFlip ? -1.0 : 1.0, verticalFlip ? -1.0 : 1.0);
 
                 imgCache[cacheKey::leftPageTransformed] = imgCache[cacheKey::leftPageRaw].transformed(transform, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
-                if(doublePage) imgCache[cacheKey::rightPageTransformed] = imgCache[cacheKey::rightPageRaw].transformed(transform, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
+                if(doublePage) 
+                    imgCache[cacheKey::rightPageTransformed] = imgCache[cacheKey::rightPageRaw].transformed(transform, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
 
                 if(!dynamicBackground.isValid() && mainViewBackground == "dynamic")
                 {
@@ -778,6 +836,7 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
             auto combined_width = imgCache[cacheKey::leftPageTransformed].width() + imgCache[cacheKey::rightPageTransformed].width();
             auto combined_height = std::max(imgCache[cacheKey::leftPageTransformed].height(), imgCache[cacheKey::rightPageTransformed].height());
 
+            // -- extra, save current presented image to clipboard.
             if(renderCombinedImage)
             {
                 QPixmap img_combined;
@@ -793,39 +852,46 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
                 }
 
                 QPainter combined_painter(&img_combined);
+                
                 combined_painter.drawPixmap(0, (img_combined.height() - imgCache[cacheKey::leftPageTransformed].height()) / 2.0, imgCache[cacheKey::leftPageTransformed]);
-                if(!imgCache[cacheKey::rightPageTransformed].isNull())
+                if(!imgCache[cacheKey::rightPageTransformed].isNull()){
+                    //combined_painter.
+                    combined_painter.setPen(Qt::black);
+                    combined_painter.drawLine(imgCache[cacheKey::leftPageTransformed].width(), (img_combined.height() - imgCache[cacheKey::rightPageTransformed].height()) / 2.0,imgCache[cacheKey::leftPageTransformed].width(),this->height());
                     combined_painter.drawPixmap(imgCache[cacheKey::leftPageTransformed].width(), (img_combined.height() - imgCache[cacheKey::rightPageTransformed].height()) / 2.0, imgCache[cacheKey::rightPageTransformed]);
+                }
                 combined_painter.end();
                 cachedCombinedImage = img_combined;
             }
+
+            // -- 4. time to draw to the display.
+            auto scaleMode = hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation;
 
             if(imgCache[cacheKey::leftPageFitted].isNull())
             {
                 if(fitMode == FitMode::FitHeight)
                 {
-                    if(imgCache[cacheKey::leftPageTransformed].height() > height || stretchSmallImages)
-                    {
-                        imgCache[cacheKey::leftPageFitted] = imgCache[cacheKey::leftPageTransformed].scaledToHeight(height, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
-                    }
-                    else
-                    {
+                    int temp = height;
+                    height *= calcZoomScaleFactor();
+                    if(imgCache[cacheKey::leftPageTransformed].height() > height || stretchSmallImages) {
+                        imgCache[cacheKey::leftPageFitted] = imgCache[cacheKey::leftPageTransformed].scaledToHeight(height, scaleMode);
+                    } else {
                         imgCache[cacheKey::leftPageFitted] = imgCache[cacheKey::leftPageTransformed];
                     }
 
-                    if(imgCache[cacheKey::rightPageTransformed].height() > height || stretchSmallImages)
-                    {
-                        imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed].scaledToHeight(height, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
-                    }
-                    else
-                    {
+                    if(imgCache[cacheKey::rightPageTransformed].height() > height || stretchSmallImages) {
+                        imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed].scaledToHeight(height, scaleMode);
+                    } else {
                         imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed];
                     }
                     cachedZoomBaseLeftImageSize = imgCache[cacheKey::leftPageFitted].size();
                     cachedZoomBaseRightImageSize = imgCache[cacheKey::rightPageFitted].size();
+                    height = temp;
                 }
                 else if(fitMode == FitMode::FitWidth)
                 {
+                    int temp = width;
+                    width *= calcZoomScaleFactor();
                     if(combined_width > width || stretchSmallImages)
                     {
                         double leftProportion = double(imgCache[cacheKey::leftPageTransformed].width()) / double(combined_width);
@@ -836,8 +902,8 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
                             rightScaledWidth = 0;
                             leftScaledWidth = width;
                         }
-                        imgCache[cacheKey::leftPageFitted] = imgCache[cacheKey::leftPageTransformed].scaledToWidth(leftScaledWidth, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
-                        if(doublePage) imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed].scaledToWidth(rightScaledWidth, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
+                        imgCache[cacheKey::leftPageFitted] = imgCache[cacheKey::leftPageTransformed].scaledToWidth(leftScaledWidth, scaleMode);
+                        if(doublePage) imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed].scaledToWidth(rightScaledWidth, scaleMode);
                     }
                     else
                     {
@@ -846,6 +912,7 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
                     }
                     cachedZoomBaseLeftImageSize = imgCache[cacheKey::leftPageFitted].size();
                     cachedZoomBaseRightImageSize = imgCache[cacheKey::rightPageFitted].size();
+                    width = temp;
                 }
                 else if(fitMode == FitMode::FitBest)
                 {
@@ -858,8 +925,8 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
 
                         fitLeftRightImageToSize(width, height, combined_width, combined_height, leftScaledWidth, rightScaledWidth, leftScaledHeight, rightScaledHeight);
 
-                        imgCache[cacheKey::leftPageFitted] = imgCache[cacheKey::leftPageTransformed].scaled(leftScaledWidth, leftScaledHeight, Qt::IgnoreAspectRatio, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
-                        if(doublePage) imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed].scaled(rightScaledWidth, rightScaledHeight, Qt::IgnoreAspectRatio, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
+                        imgCache[cacheKey::leftPageFitted] = imgCache[cacheKey::leftPageTransformed].scaled(leftScaledWidth, leftScaledHeight, Qt::IgnoreAspectRatio, scaleMode);
+                        if(doublePage) imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed].scaled(rightScaledWidth, rightScaledHeight, Qt::IgnoreAspectRatio, scaleMode);
                     }
                     else
                     {
@@ -887,13 +954,15 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
 
                         fitLeftRightImageToSize(fixedSizeWidth, fixedSizeHeight, combined_width, combined_height, leftScaledWidth, rightScaledWidth, leftScaledHeight, rightScaledHeight);
 
-                        imgCache[cacheKey::leftPageFitted] = imgCache[cacheKey::leftPageTransformed].scaled(leftScaledWidth, leftScaledHeight, Qt::IgnoreAspectRatio, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
-                        if(doublePage) imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed].scaled(rightScaledWidth, rightScaledHeight, Qt::IgnoreAspectRatio, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
+                        imgCache[cacheKey::leftPageFitted] = imgCache[cacheKey::leftPageTransformed].scaled(leftScaledWidth, leftScaledHeight, Qt::IgnoreAspectRatio, scaleMode);
+                        if(doublePage)
+                            imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed].scaled(rightScaledWidth, rightScaledHeight, Qt::IgnoreAspectRatio, scaleMode);
                     }
                     else
                     {
                         imgCache[cacheKey::leftPageFitted] = imgCache[cacheKey::leftPageTransformed];
-                        imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed];
+                        if(doublePage)
+                            imgCache[cacheKey::rightPageFitted] = imgCache[cacheKey::rightPageTransformed];
                     }
                     cachedZoomBaseLeftImageSize = imgCache[cacheKey::leftPageFitted].size();
                     cachedZoomBaseRightImageSize = imgCache[cacheKey::rightPageFitted].size();
@@ -1384,6 +1453,32 @@ void PageViewWidget::scrollPrev(PageViewWidget::ScrollSource src)
     }
 }
 
+bool PageViewWidget::isSinglePage(int pagenumber)
+{
+    auto isWidPage = [this](int pn){
+        pn = std::max(0, pn -1);
+        QPixmap img = comic->getPagePixmap(pn);
+        if(img.width() > img.height()) return true;
+        auto getWidth = [this](int n){
+            return (n <0 || n >= comic->getPageCount())?
+                0: comic->getPagePixmap(n).width();
+        };
+        auto width =std::max(getWidth(pn-1), getWidth(pn+1));
+        return img.height() > width * 1.75? true: false;
+    };
+    if(doublePageMode){
+        // first page.
+        if(pagenumber == 1 && doNotShowFirstPageAsDouble)
+            return true;
+        // last page.
+        if(pagenumber == comic->getPageCount() -1)
+            return true;
+        if(doNotShowWidePageAsDouble)
+            return false;
+    }
+    return false;
+}
+
 bool PageViewWidget::currentPageIsSinglePageInDoublePageMode()
 {
     if(doublePageMode)
@@ -1394,7 +1489,8 @@ bool PageViewWidget::currentPageIsSinglePageInDoublePageMode()
             QPixmap img;
             if(img = imgCache.value(cacheKey::leftPageRaw); img.isNull())
             {
-                img = currPage == 0 ? comic->getPagePixmap(currPage) : comic->getPagePixmap(currPage - 1);
+                img = comic->getPagePixmap(std::max(0, currPage-1));
+                //img = currPage == 0 ? comic->getPagePixmap(0) : comic->getPagePixmap(currPage - 1);
             }
             singlePage = img.width() > img.height();
         }

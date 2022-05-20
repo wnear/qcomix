@@ -248,7 +248,7 @@ ComicSource* createComicSource(const QString& path)
         {
             QMimeDatabase mimeDb;
             auto mime = mimeDb.mimeTypeForFile(path);
-            qDebug()<<"mimetype is: "<<mime.name();
+            qDebug()<<"current file mimetype is: "<<mime.name();
             if(mime.inherits("applicaton/vnd.comicbook+zip")){
                 return new ZipComicSource(path);
             } else if (mime.inherits("application/vnd.comicbook-rar")){
@@ -746,7 +746,7 @@ MobiComicSource::MobiComicSource(const QString& path)
     this->meta.f = nullptr;
     this->meta.mobi = nullptr;
     this->meta.rawml = nullptr;
-    this->meta.path = path;
+    this->meta.path = QFileInfo(path).absoluteFilePath();
 
     this->meta.mobi = mobi_init();
     this->meta.f = fopen(path.toStdString().data(), "rb");
@@ -760,19 +760,30 @@ MobiComicSource::MobiComicSource(const QString& path)
     auto ret2 = mobi_parse_rawml(this->meta.rawml, this->meta.mobi);
     if(this->meta.rawml != nullptr) {
         MOBIPart *curr = this->meta.rawml->resources;
-        size_t pageN{1};
+        size_t imagePN{1};
+        size_t anyPN{1};
         while(curr != nullptr){
             auto file_meta = mobi_get_filemeta_by_type(curr->type);
-            if(curr->type == T_JPG){
-                this->fileList.push_back({
-                        QString("page %1").arg(pageN++),
-                        curr->data, 
-                        curr->size
-                        });
+            //qDebug()<<QString("page of %1 is %2").arg(anyPN++).arg(type2str(curr->type));
+            switch(curr->type){
+                case T_JPG:
+                case T_PNG:
+                case T_BMP:
+                case T_GIF:
+                    this->fileList.push_back({
+                            QString("page %1").arg(imagePN++),
+                            curr->data, 
+                            curr->size
+                            });
+                    break;
+                default:
+                    break;
             }
             curr = curr->next;
         }
     }
+
+    
     this->id = QString::fromUtf8(QCryptographicHash::hash((path + +"!/\\++&" + QString::number(this->fileList.count())).toUtf8(), QCryptographicHash::Md5).toHex());
 }
 
@@ -809,7 +820,7 @@ QString MobiComicSource::getFilePath() const
 }
 QString MobiComicSource::getPath() const
 {
-    return this->meta.path;
+    return QFileInfo(this->meta.path).path();
 }
 ComicSource* MobiComicSource::nextComic()
 {
@@ -874,14 +885,18 @@ MobiComicSource::~MobiComicSource()
 }
 QString MobiComicSource::getNextFilePath()
 {
+    qDebug()<<"get next file";
     readNeighborList();
-
     auto length = cachedNeighborList.length();
+
+    qDebug()<<"neighbour files length: "<<length;
+    qDebug()<<"test for current path:"<<this->getFilePath();
     for(int i = 0; i < length - 1; i++)
     {
         if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
             return cachedNeighborList[i + 1].absoluteFilePath();
     }
+    qDebug()<<"not found";
 
     return {};
 }
@@ -910,9 +925,10 @@ void MobiComicSource::readNeighborList()
         collator.setNumericMode(true);
 
         QMimeDatabase mimeDb;
+        qDebug()<<"current dir files count: "<<dir.entryInfoList().length();
         for(const auto& entry: dir.entryInfoList())
         {
-            if(mimeDb.mimeTypeForFile(entry).inherits("application/zip"))
+            if(mimeDb.mimeTypeForFile(entry).inherits("application/x-mobipocket-ebook"))
             {
                 cachedNeighborList.append(entry);
             }

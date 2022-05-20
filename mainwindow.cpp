@@ -242,6 +242,9 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     if(MainWindow::hasOption("shortcutAllow_free_drag")) this->ui->actionAllow_free_drag->setShortcut(QKeySequence{MainWindow::getOption("shortcutAllow_free_drag").toString()});
     if(MainWindow::hasOption("shortcutHydrus_search_query")) this->ui->actionHydrus_search_query->setShortcut(QKeySequence{MainWindow::getOption("shortcutHydrus_search_query").toString()});
 
+
+    if(MainWindow::hasOption("zoomLevel")) this->ui->view->setZoomLevel(MainWindow::getOption("zoomLevel").toInt());
+
     if(!MainWindow::getOption("enableHydrusIntegration").toBool())
     {
         this->ui->actionHydrus_search_query->setEnabled(false);
@@ -594,6 +597,12 @@ QVariant MainWindow::getOption(const QString& key)
     }
     QMessageBox::critical(nullptr, "Error", QString("Missing/invalid configuration key: %1").arg(key));
     qFatal("Invalid key: %s", qPrintable(key));
+}
+
+bool MainWindow::setOption(const QString& key, const QVariant& val)
+{
+    userProfile->setValue(key, val);
+    return true;
 }
 
 bool MainWindow::hasOption(const QString& key)
@@ -1328,6 +1337,8 @@ void MainWindow::rebuildOpenMenu(QAction* action, const QStringList& strList,
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+    this->setOption("fitMode", this->ui->view->getFitMode());
+    userProfile->sync();
     if(getOption("confirmQuit").toBool())
     {
         if(QMessageBox::question(this, "Quitting qcomix", "Are you sure you want to quit?") == QMessageBox::Yes)
@@ -1579,26 +1590,33 @@ void MainWindow::on_actionSmart_scroll_vertical_first_triggered(bool checked)
 void MainWindow::on_actionManga_mode_triggered(bool checked)
 {
     this->ui->view->setMangaMode(checked);
+    setOption("mangaMode", checked);
 }
 
 void MainWindow::on_actionDouble_page_mode_triggered(bool checked)
 {
     this->ui->view->setDoublePageMode(checked);
+    setOption("doublePageMode", checked);
 }
 
 void MainWindow::on_actionZoom_in_triggered()
 {
     this->ui->view->zoomIn();
+    //setOption("fitMode", "zoom");
+    setOption("zoomLevel", this->ui->view->getZoomLevel());
 }
 
 void MainWindow::on_actionZoom_out_triggered()
 {
     this->ui->view->zoomOut();
+    //setOption("fitMode", "zoom");
+    setOption("zoomLevel", this->ui->view->getZoomLevel());
 }
 
 void MainWindow::on_actionReset_zoom_triggered()
 {
     this->ui->view->resetZoom();
+    setOption("zoomLevel", this->ui->view->getZoomLevel());
 }
 
 void MainWindow::on_actionStretch_small_images_triggered(bool checked)
@@ -1792,4 +1810,5 @@ void MainWindow::on_actionShow_statusbar_toggled(bool arg1)
         this->ui->actionHide_all->setChecked(false);
         updateStatusbar();
     }
+    setOption("showStatusbar", arg1);
 }

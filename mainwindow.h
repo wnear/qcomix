@@ -62,6 +62,7 @@ public:
     static void savePositionForFilePath(const QString& p, int page);
     static QString getIconFileName(const QString& iconName);
     static QVariant getOption(const QString& key);
+    static bool setOption(const QString& key, const QVariant& val);
     static bool hasOption(const QString& key);
     static QColor getMostCommonEdgeColor(const QImage& left_img, const QImage& right_img);
 
