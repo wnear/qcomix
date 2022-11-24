@@ -23,6 +23,7 @@ set(SOURCES
   comicsource.cpp
   comicsource.h
   epubcomicsource.cpp
+  mobicomicsource.cpp
   pageviewwidget.cpp
   pageviewwidget.h
   metadata.h
