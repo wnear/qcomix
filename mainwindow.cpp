@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "aboutdialog.h"
 #include "comicsource.h"
 #include "imagecache.h"
+#include "imagepreloader.h"
 #include "thumbnailer.h"
 #include "ui_mainwindow.h"
 #include <QActionGroup>
@@ -462,12 +463,10 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
             });
 
     connect(this->ui->thumbnails, &ThumbnailWidget::pageChangeRequested, this->ui->view, &PageViewWidget::goToPage);
-    connect(this->ui->thumbnails, &ThumbnailWidget::nextPageRequested, [&]() {
-        this->ui->view->nextPage();
-    });
+    connect(this->ui->thumbnails, &ThumbnailWidget::nextPageRequested, [&]() { this->ui->view->nextPage(); });
     connect(this->ui->thumbnails, &ThumbnailWidget::prevPageRequested, this->ui->view, &PageViewWidget::previousPage);
-    connect(this->ui->thumbnails, &ThumbnailWidget::prevPageRequested, this, [](){
-            });
+    connect(this->ui->thumbnails, &ThumbnailWidget::prevPageRequested, this, [](){ });
+
     connect(this->ui->view, &PageViewWidget::pageViewConfigUINeedsToBeUpdated, this, &MainWindow::updateUIState);
     this->ui->bookmarksTreeWidget->header()->setSectionResizeMode(2, QHeaderView::Fixed);
     connect(this->ui->bookmarksTreeWidget, &QTreeWidget::itemChanged, [this](QTreeWidgetItem*, int) {

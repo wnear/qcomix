@@ -23,11 +23,11 @@ int readZipFileToDom(QDomDocument &domfile, QuaZip* zip, const QString& filename
  *
  * mimetype detection not needed. (maybe not needed, only image order is used in epub parsing)
  * zipsource is used as image scanner, epub/cbr, is used to order imgs or add metadata.
- */ 
+ */
 EpubComicSource::EpubComicSource(const QString& path):ZipComicSource(path)
 {
     QString protocolRootPath, realRootPath;
-    
+
     protocolRootPath = "META-INF/container.xml";
     QDomDocument contentPage;
     readZipFileToDom(contentPage, this->zip, protocolRootPath);
@@ -54,13 +54,13 @@ EpubComicSource::EpubComicSource(const QString& path):ZipComicSource(path)
 
         QList<QuaZipFileInfo> li;
         auto accer = [](QuaZipFileInfo x)->QString{return x.name;};
-        filterWithIndex(this->fileInfoList, li, imgs, accer);
+        // filterWithIndex(this->fileInfoList, li, imgs, accer);
 
-        //for(auto imgPath: imgs) {
-            //auto _info = std::find_if(this->fileInfoList.begin(), this->fileInfoList.end(),
-                    //[imgPath](auto&&  f) { return imgPath == f.name; });
-            //if(_info != this->fileInfoList.end()){ li.push_back(*_info); }
-        //}
+        for(auto imgPath: imgs) {
+            auto _info = std::find_if(this->fileInfoList.begin(), this->fileInfoList.end(),
+                    [imgPath](auto&&  f) { return imgPath == f.name; });
+            if(_info != this->fileInfoList.end()){ li.push_back(*_info); }
+        }
         this->fileInfoList.clear();
         this->fileInfoList = li;
     } else {
