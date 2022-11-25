@@ -19,7 +19,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "comicsource.h"
 
 #include "mobicomicsource.h"
+#include "rarcomicsource.h"
 
+#include <QFileInfo>
 #include <QCollator>
 #include <QDebug>
 #include <QDir>
@@ -256,6 +258,10 @@ ComicSource* createComicSource(const QString& path)
                 return new ZipComicSource(path);
             } else if (mime.inherits("application/vnd.comicbook-rar")){
                 qDebug()<<"cbr file";
+                return new RarComicSource(path);
+            } else if (mime.inherits("application/vnd.rar")){
+                qDebug()<<"cbr file";
+                return new RarComicSource(path);
             } else if (mime.inherits("application/epub+zip")) {
                 qDebug()<<"epub file";
                 return new EpubComicSource(path);
@@ -267,6 +273,7 @@ ComicSource* createComicSource(const QString& path)
                 return new ZipComicSource(path);
             } else if(mime.inherits("application/rar")) {
                 qDebug()<<"rar file";
+                return new RarComicSource(path);
             } else if(DirectoryComicSource::fileSupported(fileInfo)) {
                 return new DirectoryComicSource{path};
             }
@@ -274,6 +281,11 @@ ComicSource* createComicSource(const QString& path)
     }
 
     return nullptr;
+}
+
+FileComicSource::FileComicSource(const QString& path) {
+    this->path = QFileInfo(path).absoluteFilePath();
+    this->id = QString::fromUtf8(QCryptographicHash::hash((this->getFilePath() + +"!/\\++&" + QString::number(QFileInfo(path).size())).toUtf8(), QCryptographicHash::Md5).toHex());
 }
 
 QString FileComicSource::getID() const
@@ -361,15 +373,13 @@ QString FileComicSource::getPrevFilePath()
     return {};
 }
 
-ZipComicSource::ZipComicSource(const QString& path)
+ZipComicSource::ZipComicSource(const QString& path):FileComicSource(path)
 {
-    QFileInfo f_inf(path);
-    this->path = f_inf.absoluteFilePath();
+    QFileInfo f_info(path);
 
     this->zip = new QuaZip(this->path);
     if(zip->open(QuaZip::mdUnzip)) {
         this->currZipFile = new QuaZipFile(zip);
-        this->id = QString::fromUtf8(QCryptographicHash::hash((this->getFilePath() + +"!/\\++&" + QString::number(zip->getEntriesCount())).toUtf8(), QCryptographicHash::Md5).toHex());
 
         auto fInfo = zip->getFileInfoList();
         QMimeDatabase mimeDb;
@@ -380,7 +390,7 @@ ZipComicSource::ZipComicSource(const QString& path)
             for(const auto& format: supportedImageFormats) {
                 for(const auto& possibleMime: possibleMimes) {
                     if(possibleMime.inherits(format)) {
-                        this->fileInfoList.append(file);
+                        this->m_zipFileInfoList.append(file);
                         fileOK = false;
                         break;
                     }
@@ -394,7 +404,7 @@ ZipComicSource::ZipComicSource(const QString& path)
         collator.setNumericMode(true);
 
         std::sort(
-          this->fileInfoList.begin(), this->fileInfoList.end(),
+          this->m_zipFileInfoList.begin(), this->m_zipFileInfoList.end(),
           [&collator](const QuaZipFileInfo& file1, const QuaZipFileInfo& file2) {
               return collator.compare(file1.name, file2.name) < 0;
           });
@@ -403,7 +413,7 @@ ZipComicSource::ZipComicSource(const QString& path)
 
 int ZipComicSource::getPageCount() const
 {
-    return this->fileInfoList.length();
+    return this->m_zipFileInfoList.length();
 }
 
 QPixmap ZipComicSource::getPagePixmap(int pageNum)
@@ -412,7 +422,7 @@ QPixmap ZipComicSource::getPagePixmap(int pageNum)
     if(auto img = ImageCache::cache().getImage(cacheKey); !img.isNull()) return img;
 
     zipM.lock();
-    this->zip->setCurrentFile(this->fileInfoList[pageNum].name);
+    this->zip->setCurrentFile(this->m_zipFileInfoList[pageNum].name);
     if(this->currZipFile->open(QIODevice::ReadOnly))
     {
         QPixmap img;
@@ -432,7 +442,7 @@ QString ZipComicSource::getPageFilePath(int pageNum)
     tmp.setAutoRemove(false);
     if(tmp.open())
     {
-        this->zip->setCurrentFile(this->fileInfoList[pageNum].name);
+        this->zip->setCurrentFile(this->m_zipFileInfoList[pageNum].name);
         if(this->currZipFile->open(QIODevice::ReadOnly))
         {
             tmp.write(this->currZipFile->readAll());
@@ -449,19 +459,21 @@ PageMetadata ZipComicSource::getPageMetadata(int pageNum)
 {
     if(metaDataCache.count(pageNum)) return metaDataCache[pageNum];
 
-    QMimeDatabase mdb;
     PageMetadata res;
     auto px = getPagePixmap(pageNum);
     res.width = px.width();
     res.height = px.height();
-    res.fileName = this->fileInfoList[pageNum].name;
-    res.fileSize = this->fileInfoList[pageNum].uncompressedSize;
-    auto possibleMimes = mdb.mimeTypesForFileName(this->fileInfoList[pageNum].name);
-    res.fileType = "unknown";
-    if(!possibleMimes.empty())
-    {
+    res.fileName = this->m_zipFileInfoList[pageNum].name;
+    res.fileSize = this->m_zipFileInfoList[pageNum].uncompressedSize;
+
+    QMimeDatabase mdb;
+    auto possibleMimes = mdb.mimeTypesForFileName(res.fileName);
+    if(!possibleMimes.empty()) {
         res.fileType = possibleMimes[0].name();
+    } else {
+        res.fileType = "unknown";
     }
+
     res.valid = true;
     metaDataCache[pageNum] = res;
     return res;
@@ -740,5 +752,4 @@ int ComicSource::startAtPage() const
 {
     return -1;
 }
-
 

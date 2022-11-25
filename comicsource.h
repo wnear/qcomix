@@ -57,19 +57,19 @@ public:
 class FileComicSource : public ComicSource
 {
 public:
-    FileComicSource(){}
-    virtual QString getID() const override;
-    virtual QString getTitle() const override;
-    virtual ComicMetadata getComicMetadata() const override;
+  FileComicSource(const QString& path);
+  virtual QString getID() const override;
+  virtual QString getTitle() const override;
+  virtual ComicMetadata getComicMetadata() const override;
 
-    virtual QString getPath() const override;
-    virtual QString getFilePath() const override;
+  virtual QString getPath() const override;
+  virtual QString getFilePath() const override;
 
-    virtual ComicSource* nextComic() override;
-    virtual ComicSource* previousComic() override;
-    virtual bool hasNextComic() override;
-    virtual bool hasPreviousComic() override;
-    virtual void readNeighborList() = 0;
+  virtual ComicSource* nextComic() override;
+  virtual ComicSource* previousComic() override;
+  virtual bool hasNextComic() override;
+  virtual bool hasPreviousComic() override;
+  virtual void readNeighborList() = 0;
 
 protected:
     QString getNextFilePath();
@@ -77,6 +77,7 @@ protected:
     QFileInfoList cachedNeighborList;
     QString path;
     QString id;
+
 };
 
 class ZipComicSource : public FileComicSource
@@ -91,13 +92,9 @@ public:
 
 protected:
     virtual void readNeighborList() override;
-    // QString getNextFilePath();
-    // QString getPrevFilePath();
-    // QFileInfoList cachedNeighborList;
-    // QString path;
 
     QMutex zipM;
-    QList<QuaZipFileInfo> fileInfoList;
+    QList<QuaZipFileInfo> m_zipFileInfoList;
     QuaZip* zip = nullptr;
     QuaZipFile* currZipFile = nullptr;
     QHash<int, PageMetadata> metaDataCache;

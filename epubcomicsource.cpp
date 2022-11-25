@@ -67,12 +67,12 @@ EpubComicSource::EpubComicSource(const QString& path):ZipComicSource(path)
         // filterWithIndex(this->fileInfoList, li, imgs, accer);
 
         for(auto imgPath: imgs) {
-            auto _info = std::find_if(this->fileInfoList.begin(), this->fileInfoList.end(),
+            auto _info = std::find_if(this->m_zipFileInfoList.begin(), this->m_zipFileInfoList.end(),
                     [imgPath](auto&&  f) { return imgPath == f.name; });
-            if(_info != this->fileInfoList.end()){ li.push_back(*_info); }
+            if(_info != this->m_zipFileInfoList.end()){ li.push_back(*_info); }
         }
-        this->fileInfoList.clear();
-        this->fileInfoList = li;
+        this->m_zipFileInfoList.clear();
+        this->m_zipFileInfoList = li;
     } else {
         qDebug()<<"error to get contents file";
     }
