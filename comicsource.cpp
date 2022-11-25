@@ -276,6 +276,91 @@ ComicSource* createComicSource(const QString& path)
     return nullptr;
 }
 
+QString FileComicSource::getID() const
+{
+    return id;
+}
+
+QString FileComicSource::getTitle() const
+{
+    return QFileInfo(this->path).completeBaseName();
+}
+
+QString FileComicSource::getPath() const
+{
+    return QFileInfo(this->path).path();
+}
+
+QString FileComicSource::getFilePath() const
+{
+    return this->path;
+}
+
+ComicSource* FileComicSource::nextComic()
+{
+    if(auto path = getNextFilePath(); !path.isEmpty())
+    {
+        return createComicSource(path);
+    }
+    return nullptr;
+}
+
+ComicSource* FileComicSource::previousComic()
+{
+    if(auto path = getPrevFilePath(); !path.isEmpty())
+    {
+        return createComicSource(path);
+    }
+    return nullptr;
+}
+
+bool FileComicSource::hasNextComic()
+{
+    return !getNextFilePath().isEmpty();
+}
+
+bool FileComicSource::hasPreviousComic()
+{
+    return !getPrevFilePath().isEmpty();
+}
+
+ComicMetadata FileComicSource::getComicMetadata() const
+{
+    ComicMetadata res;
+    res.title = this->getTitle();
+    res.fileName = path;
+    res.valid = true;
+    return res;
+}
+
+QString FileComicSource::getNextFilePath()
+{
+    readNeighborList();
+
+    auto length = cachedNeighborList.length();
+    for(int i = 0; i < length - 1; i++)
+    {
+        if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
+            return cachedNeighborList[i + 1].absoluteFilePath();
+    }
+
+    return {};
+}
+
+QString FileComicSource::getPrevFilePath()
+{
+    readNeighborList();
+
+    auto length = cachedNeighborList.length();
+    for(int i = 1; i < length; i++)
+    {
+        if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
+            return cachedNeighborList[i - 1].absoluteFilePath();
+    }
+
+    return {};
+}
+
 ZipComicSource::ZipComicSource(const QString& path)
 {
     QFileInfo f_inf(path);
@@ -358,62 +443,7 @@ QString ZipComicSource::getPageFilePath(int pageNum)
     return tmp.fileName();
 }
 
-QString ZipComicSource::getTitle() const
-{
-    return QFileInfo(this->path).completeBaseName();
-}
 
-QString ZipComicSource::getFilePath() const
-{
-    return this->path;
-}
-
-QString ZipComicSource::getPath() const
-{
-    return QFileInfo(this->path).path();
-}
-
-ComicSource* ZipComicSource::nextComic()
-{
-    if(auto path = getNextFilePath(); !path.isEmpty())
-    {
-        return createComicSource(path);
-    }
-    return nullptr;
-}
-
-ComicSource* ZipComicSource::previousComic()
-{
-    if(auto path = getPrevFilePath(); !path.isEmpty())
-    {
-        return createComicSource(path);
-    }
-    return nullptr;
-}
-
-QString ZipComicSource::getID() const
-{
-    return id;
-}
-
-bool ZipComicSource::hasNextComic()
-{
-    return !getNextFilePath().isEmpty();
-}
-
-bool ZipComicSource::hasPreviousComic()
-{
-    return !getPrevFilePath().isEmpty();
-}
-
-ComicMetadata ZipComicSource::getComicMetadata() const
-{
-    ComicMetadata res;
-    res.title = this->getTitle();
-    res.fileName = path;
-    res.valid = true;
-    return res;
-}
 
 PageMetadata ZipComicSource::getPageMetadata(int pageNum)
 {
@@ -451,33 +481,6 @@ ZipComicSource::~ZipComicSource()
     }
 }
 
-QString ZipComicSource::getNextFilePath()
-{
-    readNeighborList();
-
-    auto length = cachedNeighborList.length();
-    for(int i = 0; i < length - 1; i++)
-    {
-        if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
-            return cachedNeighborList[i + 1].absoluteFilePath();
-    }
-
-    return {};
-}
-
-QString ZipComicSource::getPrevFilePath()
-{
-    readNeighborList();
-
-    auto length = cachedNeighborList.length();
-    for(int i = 1; i < length; i++)
-    {
-        if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
-            return cachedNeighborList[i - 1].absoluteFilePath();
-    }
-
-    return {};
-}
 
 void ZipComicSource::readNeighborList()
 {

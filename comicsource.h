@@ -56,39 +56,50 @@ public:
 
 class FileComicSource : public ComicSource
 {
+public:
+    FileComicSource(){}
+    virtual QString getID() const override;
+    virtual QString getTitle() const override;
+    virtual ComicMetadata getComicMetadata() const override;
 
+    virtual QString getPath() const override;
+    virtual QString getFilePath() const override;
+
+    virtual ComicSource* nextComic() override;
+    virtual ComicSource* previousComic() override;
+    virtual bool hasNextComic() override;
+    virtual bool hasPreviousComic() override;
+    virtual void readNeighborList() = 0;
+
+protected:
+    QString getNextFilePath();
+    QString getPrevFilePath();
+    QFileInfoList cachedNeighborList;
+    QString path;
+    QString id;
 };
 
-class ZipComicSource : public ComicSource
+class ZipComicSource : public FileComicSource
 {
 public:
     ZipComicSource(const QString& path);
     virtual int getPageCount() const override;
     virtual QPixmap getPagePixmap(int pageNum) override;
     virtual QString getPageFilePath(int pageNum) override;
-    virtual QString getTitle() const override;
-    virtual QString getFilePath() const override;
-    virtual QString getPath() const override;
-    virtual ComicSource* nextComic() override;
-    virtual ComicSource* previousComic() override;
-    virtual QString getID() const override;
-    virtual bool hasNextComic() override;
-    virtual bool hasPreviousComic() override;
-    virtual ComicMetadata getComicMetadata() const override;
     virtual PageMetadata getPageMetadata(int pageNum) override;
     virtual ~ZipComicSource();
 
 protected:
-    QString getNextFilePath();
-    QString getPrevFilePath();
+    virtual void readNeighborList() override;
+    // QString getNextFilePath();
+    // QString getPrevFilePath();
+    // QFileInfoList cachedNeighborList;
+    // QString path;
+
     QMutex zipM;
-    void readNeighborList();
     QList<QuaZipFileInfo> fileInfoList;
-    QFileInfoList cachedNeighborList;
     QuaZip* zip = nullptr;
     QuaZipFile* currZipFile = nullptr;
-    QString id;
-    QString path;
     QHash<int, PageMetadata> metaDataCache;
 };
 
