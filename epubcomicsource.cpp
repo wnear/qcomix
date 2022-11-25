@@ -32,11 +32,16 @@ EpubComicSource::EpubComicSource(const QString& path):ZipComicSource(path)
     QDomDocument contentPage;
     readZipFileToDom(contentPage, this->zip, protocolRootPath);
 
-    realRootPath  = contentPage.documentElement().firstChildElement().firstChildElement().attribute("full-path");
+    realRootPath = contentPage.documentElement()
+                        .firstChildElement()
+                        .firstChildElement()
+                        .attribute("full-path");
 
     if(1) {
         readZipFileToDom(contentPage, this->zip, realRootPath);
-        auto item = contentPage.documentElement().firstChildElement("manifest").firstChildElement("item");
+        auto item = contentPage.documentElement()
+                    .firstChildElement("manifest")
+                    .firstChildElement("item");
 
         QStringList imgs;
         while(!item.isNull()){
@@ -47,7 +52,12 @@ EpubComicSource::EpubComicSource(const QString& path):ZipComicSource(path)
             auto htmlPath = item.attribute("href");
             QDomDocument htmlPage;
             readZipFileToDom(htmlPage, this->zip, htmlPath);
-            QString imgPath = htmlPage.documentElement().firstChildElement("body").firstChildElement().firstChildElement().firstChildElement().attribute("src").mid(3);
+            QString imgPath = htmlPage.documentElement()
+                                .firstChildElement("body")
+                                .firstChildElement()
+                                .firstChildElement()
+                                .firstChildElement()
+                                .attribute("src").mid(3);
             imgs.push_back(imgPath);
             item = item.nextSiblingElement();
         }
