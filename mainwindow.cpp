@@ -815,31 +815,31 @@ void MainWindow::on_actionShow_menu_toggled(bool arg1)
     if(this->ui->menuBar->isVisible()) this->ui->actionHide_all->setChecked(false);
 }
 
-void MainWindow::loadComic(ComicSource* src)
+void MainWindow::loadComic(ComicSource* comic)
 {
     nameInWindowTitle.clear();
     currentPageInWindowTitle = 0;
     maxPageInWindowTitle = 0;
 
-    if(src)
+    if(comic)
     {
         if(getOption("useComicNameAsWindowTitle").toBool())
         {
-            nameInWindowTitle = src->getTitle();
+            nameInWindowTitle = comic->getTitle();
         }
         else
         {
             nameInWindowTitle = "qcomix";
         }
-        statusbarFilepath = src->getFilePath();
-        statusbarTitle = src->getTitle();
+        statusbarFilepath = comic->getFilePath();
+        statusbarTitle = comic->getTitle();
         statusbarFilename = QFileInfo{statusbarFilepath}.fileName();
 
-        if(getOption("useFirstPageAsWindowIcon").toBool() && src->getPageCount() > 0)
+        if(getOption("useFirstPageAsWindowIcon").toBool() && comic->getPageCount() > 0)
         {
-            if(src->getPageCount() > 0)
+            if(comic->getPageCount() > 0)
             {
-                setWindowIcon(src->getPagePixmap(0).scaled(256, 256, Qt::KeepAspectRatio));
+                setWindowIcon(comic->getPagePixmap(0).scaled(256, 256, Qt::KeepAspectRatio));
             }
             else
             {
@@ -851,13 +851,13 @@ void MainWindow::loadComic(ComicSource* src)
             setWindowIcon(QIcon(":/icon.png"));
         }
 
-        const QModelIndex rootIndex = fileSystemModel.index(src->getFilePath());
+        const QModelIndex rootIndex = fileSystemModel.index(comic->getFilePath());
         this->ui->fileSystemView->setCurrentIndex(fileSystemFilterModel.mapFromSource(rootIndex));
         this->ui->fileSystemView->setExpanded(fileSystemFilterModel.mapFromSource(rootIndex), false);
         this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapFromSource(rootIndex));
 
-        this->saveLastViewedFilePath(src->getFilePath());
-        this->addToRecentFiles(src->getFilePath());
+        this->saveLastViewedFilePath(comic->getFilePath());
+        this->addToRecentFiles(comic->getFilePath());
     } else {
         nameInWindowTitle = "qcomix";
         setWindowIcon(QIcon(":/icon.png"));
@@ -874,12 +874,12 @@ void MainWindow::loadComic(ComicSource* src)
         this->saveLastViewedFilePath({});
     }
 
-    this->rebuildOpenWithMenu(src);
+    this->rebuildOpenWithMenu(comic);
 
     updateWindowTitle();
     updateStatusbar();
 
-    auto oldComic = this->ui->view->setComicSource(src);
+    auto oldComic = this->ui->view->setComicSource(comic);
 
     imagePreloader->stopCurrentWork();
 
@@ -890,11 +890,11 @@ void MainWindow::loadComic(ComicSource* src)
 
     delete oldComic;
 
-    if(src)
+    if(comic)
     {
         for(auto t: std::as_const(thumbnailerThreads))
         {
-            t->startWorking(src);
+            t->startWorking(comic);
             if(this->ui->view->currentPage() > 6)
             {
                 t->refocus(this->ui->view->currentPage());
