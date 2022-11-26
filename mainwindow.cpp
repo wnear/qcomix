@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "mainwindow.h"
+#include <qnamespace.h>
 #include "aboutdialog.h"
 #include "comicsource.h"
 #include "imagecache.h"
@@ -285,11 +286,30 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     scr_v->setVisible(getOption("showScrollbars").toBool() && getOption("alwaysShowScrollbars").toBool());
     this->ui->actionShow_scrollbars->setChecked(getOption("showScrollbars").toBool());
 
-    if(getOption("quitOnEscape").toBool())
     {
+        //logic:
+        // esc ==> if isFullScreen, return to normal.
+        //         else, if option to quit, quit.
         auto esc = new QShortcut(Qt::Key_Escape, this);
-        connect(esc, &QShortcut::activated, QApplication::instance(), &QApplication::quit);
-        connect(esc, &QShortcut::activatedAmbiguously, QApplication::instance(), &QApplication::quit);
+        auto quitOrUnFullScreen = [this](){
+            if(this->isFullScreen()) {
+                // auto f11 = new QShortcut(Qt::Key_F11, this);
+
+                for(auto topmenu: ui->menuBar->actions()) {
+                    auto actions = topmenu->menu()->actions();
+                    for(auto& action: actions){
+                        if(action->text().contains("Fullscreen")){
+                            action->toggle();
+                        }
+                    }
+                };
+            } else {
+                if(getOption("quitOnEscape").toBool())
+                    QCoreApplication::instance()->quit();
+            }
+        };
+        connect(esc, &QShortcut::activated, quitOrUnFullScreen);
+        connect(esc, &QShortcut::activatedAmbiguously, quitOrUnFullScreen);
     }
 
     if(getOption("useCurrentPageAsWindowIcon").toBool())
