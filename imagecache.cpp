@@ -17,6 +17,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "imagecache.h"
+#include <QReadLocker>
+#include <QWriteLocker>
+#include <QDebug>
+
 
 ImageCache& ImageCache::cache()
 {
@@ -26,10 +30,9 @@ ImageCache& ImageCache::cache()
 
 QPixmap ImageCache::getImage(const QPair<QString, int>& key)
 {
-    for(const auto& s: std::as_const(storage))
-    {
-        if(s.page == key.second && s.id == key.first)
-        {
+    QReadLocker lock(&this->mut);
+    for(const auto& s: std::as_const(storage)) {
+        if(s.page == key.second && s.id == key.first) {
             return s.data;
         }
     }
@@ -38,13 +41,12 @@ QPixmap ImageCache::getImage(const QPair<QString, int>& key)
 
 void ImageCache::addImage(const QPair<QString, int>& key, const QPixmap& img)
 {
-    mut.lock();
+    QWriteLocker lock(&mut);
     if(!hasKey(key))
     {
         maintain();
         storage.push_front(imgCacheEntry{key.first, key.second, img});
     }
-    mut.unlock();
 }
 
 int ImageCache::hasKey(const QPair<QString, int>& key)
@@ -66,6 +68,7 @@ void ImageCache::initialize(int maxCount)
 
 void ImageCache::maintain()
 {
+    QWriteLocker lock(&mut);
     if(storage.size() > maxCount)
     {
         while(storage.size() > (maxCount * 2) / 3)

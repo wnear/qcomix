@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QPixmap>
 #include <QString>
 #include <QMutex>
+#include <QReadWriteLock>
 #include <QMap>
 
 struct imgCacheEntry
@@ -44,7 +45,7 @@ private:
     void maintain();
     int maxCount = 0;
     QVector<imgCacheEntry> storage;
-    QMutex mut;
+    QReadWriteLock mut { QReadWriteLock::Recursive };
 };
 
 class ThumbCache
