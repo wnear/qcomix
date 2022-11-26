@@ -126,8 +126,9 @@ QString DirectoryComicSource::getFilePath() const
 
 QString DirectoryComicSource::getPath() const
 {
+    // assert(0);
     QDir d(this->path);
-    d.cdUp();
+    // d.cdUp();
     return d.absolutePath();
 }
 
