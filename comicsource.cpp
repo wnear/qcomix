@@ -62,13 +62,20 @@ bool isImage(const QString &filename){
     return false;
 }
 
-DirectoryComicSource::DirectoryComicSource(const QString& filePath)
+DirectoryComicSource::DirectoryComicSource(const QString& path)
 {
-    QFileInfo fInfo(filePath);
+    QFileInfo fInfo(path);
+    QDir dir;
+    if(fInfo.isFile()){
+        dir = fInfo.dir();
+    } else {
+        dir = QDir(path);
+    }
+    // auto dir = fInfo.dir();
 
-    auto dir = fInfo.dir();
 
     this->path = dir.absolutePath();
+    qDebug()<<"directory, path is "<<this->path;
     this->id = QString::fromUtf8(QCryptographicHash::hash(path.toUtf8(), QCryptographicHash::Md5).toHex());
 
     dir.setFilter(QDir::Files | QDir::Hidden);
