@@ -106,7 +106,7 @@ MainWindow::MainWindow(QWidget* parent) :
     this->ui->fileSystemView->setSelectionMode(QAbstractItemView::SingleSelection);
     this->ui->fileSystemView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
     this->ui->fileSystemView->header()->setStretchLastSection(false);
-    this->ui->fileSystemView->setExpandsOnDoubleClick(false);
+    this->ui->fileSystemView->setExpandsOnDoubleClick(true);
     this->ui->bookmarksTreeWidget->setItemDelegateForColumn(0, new NoEditDelegate(this));
     this->ui->bookmarksTreeWidget->setSortingEnabled(true);
     this->ui->bookmarksTreeWidget->setIndentation(0);
@@ -478,7 +478,8 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
                 this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapToSource(index));
                 if(auto comic = createComicSource(filePath))
                 {
-                    this->loadComic(comic);
+                    if(comic && comic->getPageCount())
+                        this->loadComic(comic);
                 }
             });
 
@@ -821,7 +822,7 @@ void MainWindow::loadComic(ComicSource* comic)
     currentPageInWindowTitle = 0;
     maxPageInWindowTitle = 0;
 
-    if(comic)
+    if(comic && comic->getPageCount())
     {
         if(getOption("useComicNameAsWindowTitle").toBool())
         {
@@ -853,25 +854,25 @@ void MainWindow::loadComic(ComicSource* comic)
 
         const QModelIndex rootIndex = fileSystemModel.index(comic->getFilePath());
         this->ui->fileSystemView->setCurrentIndex(fileSystemFilterModel.mapFromSource(rootIndex));
-        this->ui->fileSystemView->setExpanded(fileSystemFilterModel.mapFromSource(rootIndex), false);
-        this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapFromSource(rootIndex));
+        // this->ui->fileSystemView->setExpanded(fileSystemFilterModel.mapFromSource(rootIndex), false);
+        // this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapFromSource(rootIndex));
 
         this->saveLastViewedFilePath(comic->getFilePath());
         this->addToRecentFiles(comic->getFilePath());
     } else {
-        nameInWindowTitle = "qcomix";
-        setWindowIcon(QIcon(":/icon.png"));
-        statusbarFilepath.clear();
-        statusbarTitle.clear();
-        statusbarCurrPage = 0;
-        statusbarPageCnt = 0;
+        // nameInWindowTitle = "qcomix";
+        // setWindowIcon(QIcon(":/icon.png"));
+        // statusbarFilepath.clear();
+        // statusbarTitle.clear();
+        // statusbarCurrPage = 0;
+        // statusbarPageCnt = 0;
 
-        const QModelIndex rootIndex = fileSystemModel.index("");
-        this->ui->fileSystemView->setCurrentIndex(fileSystemFilterModel.mapFromSource(rootIndex));
-        this->ui->fileSystemView->setExpanded(fileSystemFilterModel.mapFromSource(rootIndex), true);
-        this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapFromSource(rootIndex));
+        // const QModelIndex rootIndex = fileSystemModel.index("");
+        // this->ui->fileSystemView->setCurrentIndex(fileSystemFilterModel.mapFromSource(rootIndex));
+        // this->ui->fileSystemView->setExpanded(fileSystemFilterModel.mapFromSource(rootIndex), true);
+        // this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapFromSource(rootIndex));
 
-        this->saveLastViewedFilePath({});
+        // this->saveLastViewedFilePath({});
     }
 
     this->rebuildOpenWithMenu(comic);
