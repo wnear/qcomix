@@ -14,25 +14,6 @@
 #include <QImageReader>
 #include <QDebug>
 
-namespace {
-    bool isImage(const QString &filename){
-
-        QMimeDatabase mimeDb;
-        auto supportedImageFormats = QImageReader::supportedMimeTypes();
-        bool fileOK = false;
-        auto possibleMimes = mimeDb.mimeTypesForFileName(filename);
-        for(const auto& format: supportedImageFormats) {
-            for(const auto& possibleMime: possibleMimes) {
-                if(possibleMime.inherits(format)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-};
-
 RarComicSource::RarComicSource(const QString& path):FileComicSource(path) {
     //rar vt, list file info.
 

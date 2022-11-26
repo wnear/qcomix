@@ -172,5 +172,6 @@ private:
 };
 
 ComicSource* createComicSource(const QString& path);
+bool isImage(const QString &filename);
 
 #endif // COMICSOURCE_H

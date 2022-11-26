@@ -45,6 +45,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <cstdio>
 
+bool isImage(const QString &filename){
+
+    QMimeDatabase mimeDb;
+    auto supportedImageFormats = QImageReader::supportedMimeTypes();
+    bool fileOK = false;
+    auto possibleMimes = mimeDb.mimeTypesForFileName(filename);
+    for(const auto& format: supportedImageFormats) {
+        for(const auto& possibleMime: possibleMimes) {
+            if(possibleMime.inherits(format)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 DirectoryComicSource::DirectoryComicSource(const QString& filePath)
 {
     QFileInfo fInfo(filePath);
