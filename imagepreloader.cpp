@@ -72,7 +72,18 @@ void ImagePreloader::run()
 void ImagePreloader::preloadPage(int n)
 {
     if(!enabled) return;
-    if(auto img = ImageCache::cache().getImage({src->getID(), n}); img.isNull()) src->getPagePixmap(n);
+    int limit = n + 3;
+    for(; n <= limit; n++){
+        if(n < src->getPageCount()){
+            // if(auto img = ImageCache::cache().getImage({src->getID(), n}); img.isNull())
+            // cache check is doing inside comicsource,
+            // it's a try-get.
+            src->getPagePixmap(n);
+        } else {
+            break;
+        }
+
+    }
 }
 
 
