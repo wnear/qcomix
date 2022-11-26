@@ -517,14 +517,21 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
         adjustSidePanelWidth(this->ui->thumbnails->minimumWidth());
     }
 
-    if(MainWindow::getOption("openLastViewedOnStartup").toBool() && openFileName.isEmpty())
-    {
-        this->loadComic(createComicSource(readLastViewedFilePath()));
-    }
-    else
-    {
+    if(! openFileName.isEmpty()){
         this->loadComic(createComicSource(openFileName));
+        qDebug()<< "open from command line: "<<openFileName;
+        return;
     }
+
+    if(MainWindow::getOption("openLastViewedOnStartup").toBool() ){
+        auto filename = readLastViewedFilePath();
+        qDebug()<< "try to open from last time: "<<filename;
+        if(QFileInfo(filename).exists()){
+            qDebug()<< "try to read from last time: exist. ";
+            this->loadComic(createComicSource(filename));
+        }
+    }
+
 }
 
 int MainWindow::getSavedPositionForFilePath(const QString& id)
