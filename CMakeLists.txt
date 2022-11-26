@@ -25,6 +25,7 @@ set(SOURCES
   epubcomicsource.cpp
   mobicomicsource.cpp
   rarcomicsource.cpp
+  pdfcomicsource.cpp
   pageviewwidget.cpp
   pageviewwidget.h
   metadata.h
@@ -55,6 +56,6 @@ qt5_add_resources(RCC_SOURCES ${RESOURCES})
 add_executable(qcomix ${SOURCES} ${FORM_H} ${RCC_SOURCES})
 
 # libunrar link error, use external rar for now
-target_link_libraries(qcomix Qt5::Widgets Qt5::Gui Qt5::Network QuaZip::QuaZip Qt5::Xml mobi)
+target_link_libraries(qcomix Qt5::Widgets Qt5::Gui Qt5::Network QuaZip::QuaZip Qt5::Xml mobi poppler poppler-qt5)
 
 install(TARGETS qcomix RUNTIME DESTINATION bin)

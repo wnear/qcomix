@@ -87,15 +87,15 @@ PageViewWidget::PageViewWidget(QWidget* parent) :
     connect(this, &PageViewWidget::zoomLevelChanged, [this](int val){
             qDebug()<< "zoom level changed to "<<val;
             });
-    connect(this, &QWidget::customContextMenuRequested, 
+    connect(this, &QWidget::customContextMenuRequested,
             this, &PageViewWidget::onCustomContextMenuRequested);
 }
 
 void PageViewWidget::onCustomContextMenuRequested(const QPoint& p)
 {
-    //@TODO: QPonter, 
+    //@TODO: QPonter,
     auto *menu = new QMenu;
-    
+
     /**
      * - save to disk
      * - rotate current.
@@ -103,7 +103,7 @@ void PageViewWidget::onCustomContextMenuRequested(const QPoint& p)
      * - single & rotate.
      * - shortcut to viewmode. //get from mainwindow.
      * - enhance.
-     * - 
+     * -
      */
     return;
 }
@@ -263,7 +263,6 @@ void PageViewWidget::nextPage(bool slideShow)
     {
         if(doublePageMode && !doublePageModeSingleStep && currPage + 1 < comic->getPageCount() && !currentPageIsSinglePageInDoublePageMode())
         {
-            
             this->setCurrentPageInternal(currPage + 2);
         }
         else
@@ -788,7 +787,7 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
                 transform.scale(horizontalFlip ? -1.0 : 1.0, verticalFlip ? -1.0 : 1.0);
 
                 imgCache[cacheKey::leftPageTransformed] = imgCache[cacheKey::leftPageRaw].transformed(transform, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
-                if(doublePage) 
+                if(doublePage)
                     imgCache[cacheKey::rightPageTransformed] = imgCache[cacheKey::rightPageRaw].transformed(transform, hqTransformMode ? Qt::SmoothTransformation : Qt::FastTransformation);
 
                 if(!dynamicBackground.isValid() && mainViewBackground == "dynamic")
@@ -852,7 +851,7 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
                 }
 
                 QPainter combined_painter(&img_combined);
-                
+
                 combined_painter.drawPixmap(0, (img_combined.height() - imgCache[cacheKey::leftPageTransformed].height()) / 2.0, imgCache[cacheKey::leftPageTransformed]);
                 if(!imgCache[cacheKey::rightPageTransformed].isNull()){
                     //combined_painter.
