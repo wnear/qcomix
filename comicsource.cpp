@@ -44,6 +44,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "mainwindow.h"
 #include <QDebug>
 #include <cstdio>
+#include <QThread>
 
 bool isImage(const QString &filename){
 
@@ -72,7 +73,10 @@ DirectoryComicSource::DirectoryComicSource(const QString& filePath)
 
     dir.setFilter(QDir::Files | QDir::Hidden);
     auto allFiles = dir.entryInfoList();
-    for(const auto& file: allFiles) if(fileSupported(file)) this->fileInfoList.append(file);
+    for(const auto& file: allFiles) {
+        if(fileSupported(file))
+            this->fileInfoList.append(file);
+    }
 
     QCollator collator;
     collator.setNumericMode(true);
@@ -101,6 +105,7 @@ int DirectoryComicSource::getPageCount() const
 
 QPixmap DirectoryComicSource::getPagePixmap(int pageNum)
 {
+    assert(pageNum >=0 && pageNum < this->getPageCount());
     auto cacheKey = QPair{id, pageNum};
     if(auto img = ImageCache::cache().getImage(cacheKey); !img.isNull()) return img;
 
@@ -111,6 +116,7 @@ QPixmap DirectoryComicSource::getPagePixmap(int pageNum)
 
 QString DirectoryComicSource::getPageFilePath(int pageNum)
 {
+    assert(pageNum >=0 && pageNum < this->getPageCount());
     return this->fileInfoList[pageNum].absoluteFilePath();
 }
 
@@ -170,6 +176,7 @@ ComicMetadata DirectoryComicSource::getComicMetadata() const
 
 PageMetadata DirectoryComicSource::getPageMetadata(int pageNum)
 {
+    assert(pageNum >=0 && pageNum < this->getPageCount());
     QMimeDatabase mdb;
     PageMetadata res;
     auto px = getPagePixmap(pageNum);
@@ -189,16 +196,7 @@ int DirectoryComicSource::startAtPage() const
 
 bool DirectoryComicSource::fileSupported(const QFileInfo& info)
 {
-    static auto supportedFormats = QImageReader::supportedMimeTypes();
-    QMimeDatabase mimeDb;
-    for(const auto& format: supportedFormats)
-    {
-        if(mimeDb.mimeTypeForFile(info).inherits(format))
-        {
-            return true;
-        }
-    }
-    return false;
+    return info.isFile() && isImage(info.absoluteFilePath());
 }
 
 QString DirectoryComicSource::getNextFilePath()

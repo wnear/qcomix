@@ -31,7 +31,7 @@ class ThumbnailWidget;
 class PageViewWidget : public QWidget
 {
     Q_OBJECT
-    
+
     Q_PROPERTY( int zoomLevel READ getZoomLevel WRITE setZoomLevel NOTIFY zoomLevelChanged )
 
 public:
@@ -93,7 +93,7 @@ signals:
     void windowIconUpdateNeeded(QPixmap);
     void archiveMetadataUpdateNeeded(ComicMetadata);
     void imageMetadataUpdateNeeded(PageMetadata, PageMetadata);
-    void currentPageChanged(const QString&, int, int);
+    void currentPageChanged(const QString&, int cur, int total);
     void fitModeChanged(PageViewWidget::FitMode);
     void updateHorizontalScrollBar(int, int, int);
     void updateVerticalScrollBar(int, int, int);
