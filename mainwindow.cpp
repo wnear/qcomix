@@ -719,11 +719,22 @@ void MainWindow::on_actionFullscreen_toggled(bool on)
 {
     if(on)
     {
-        this->showFullScreen();
+        this->menuBar()->hide();
+        this->ui->mainToolBar->hide();
+        this->ui->statusBar->hide();
+        this->ui->sidePanel->hide();
+
+        //NOTE: code from qdoc of QWidget::setWindowState.
+        this->setWindowState(this->windowState() ^ Qt::WindowFullScreen);
     }
     else
     {
-        this->showNormal();
+        this->menuBar()->show();
+        this->ui->mainToolBar->show();
+        this->ui->statusBar->show();
+        this->ui->sidePanel->show();
+
+        this->setWindowState(this->windowState() ^ Qt::WindowFullScreen);
     }
 }
 
