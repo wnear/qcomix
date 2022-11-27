@@ -55,12 +55,21 @@ RarComicSource::RarComicSource(const QString& path):FileComicSource(path) {
                 if(isImg)
                     m_rarFileInfoList.push_back(cur);
             }
+            //sort
         }
     }
-    auto len = m_rarFileInfoList.size();
-    for(auto i = 0; i< len; i++){
-        auto cur = m_rarFileInfoList[i];
-    }
+    // auto len = m_rarFileInfoList.size();
+    // for(auto i = 0; i< len; i++){
+    //     auto cur = m_rarFileInfoList[i];
+    // }
+    QCollator collator;
+    collator.setNumericMode(true);
+
+    std::sort(
+      this->m_rarFileInfoList.begin(), this->m_rarFileInfoList.end(),
+      [&collator](const PageMetadata& file1, const PageMetadata& file2) {
+          return collator.compare(file1.fileName, file2.fileName) < 0;
+      });
 }
 
 RarComicSource::~RarComicSource() {}
