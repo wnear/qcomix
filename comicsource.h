@@ -171,7 +171,8 @@ private:
     QStringList filePaths;
 };
 
-ComicSource* createComicSource(const QString& path);
+ComicSource* createComicSource_inner(const QString &path);
+ComicSource* createComicSource_fn(const QString& path);
 bool isImage(const QString &filename);
 
 #endif // COMICSOURCE_H

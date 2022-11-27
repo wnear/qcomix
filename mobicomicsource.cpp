@@ -97,7 +97,7 @@ QString MobiComicSource::getPath() const
 ComicSource* MobiComicSource::nextComic()
 {
     if(auto path = getNextFilePath(); !path.isEmpty()){
-        return createComicSource(path);
+        // return createComicSource(path);
     }
     return nullptr;
 }
@@ -105,7 +105,7 @@ ComicSource* MobiComicSource::previousComic()
 {
     if(auto path = getPrevFilePath(); !path.isEmpty())
     {
-        return createComicSource(path);
+        // return createComicSource(path);
     }
     return nullptr;
 }
