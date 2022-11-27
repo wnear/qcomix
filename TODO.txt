@@ -1,3 +1,7 @@
 * Better mime type detection in zip files
 * Support zip files inside zip files
 * Code cleanup
+
+* playlist
+** open list of files.
+** open one file.

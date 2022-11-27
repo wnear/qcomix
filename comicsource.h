@@ -31,6 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 class QuaZip;
 class QuaZipFile;
 
+//QUrl, QString, QIODevice.
 class ComicSource
 {
 public:
