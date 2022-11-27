@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <qnamespace.h>
 #include "aboutdialog.h"
 #include "comicsource.h"
+#include "comiccreator.h"
 #include "imagecache.h"
 #include "imagepreloader.h"
 #include "thumbnailer.h"
@@ -476,7 +477,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
             [this](const QModelIndex& index) {
                 auto filePath = this->fileSystemModel.fileInfo(this->fileSystemFilterModel.mapToSource(index)).absoluteFilePath();
                 this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapToSource(index));
-                if(auto comic = createComicSource(filePath))
+                if(auto comic = createComicSource(this, filePath))
                 {
                     if(comic && comic->getPageCount())
                         this->loadComic(comic);
@@ -498,7 +499,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
         auto page = item->text(1).toInt();
         if(QFileInfo::exists(filePath))
         {
-            if(auto comic = createComicSource(filePath))
+            if(auto comic = createComicSource(this, filePath))
             {
                 this->loadComic(comic);
                 this->ui->view->goToPage(page);
@@ -519,7 +520,8 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
     }
 
     if(! openFileName.isEmpty()){
-        this->loadComic(createComicSource(openFileName));
+        auto comic = ComicCreator::instance()->createComicSource(this, openFileName);
+        this->loadComic(comic);
         qDebug()<< "open from command line: "<<openFileName;
         return;
     }
@@ -529,7 +531,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
         qDebug()<< "try to open from last time: "<<filename;
         if(QFileInfo(filename).exists()){
             qDebug()<< "try to read from last time: exist. ";
-            this->loadComic(createComicSource(filename));
+            this->loadComic(createComicSource(this, filename));
         }
     }
 
@@ -1156,7 +1158,7 @@ void MainWindow::rebuildRecentFilesMenu()
                 auto openRecent = new QAction{this->ui->actionRecent->menu()};
                 openRecent->setText((hydrusEnabled && f.startsWith("hydrus://")) ? f : info.fileName());
                 connect(openRecent, &QAction::triggered, [this, f]() {
-                    this->loadComic(createComicSource(f));
+                    this->loadComic(createComicSource(this, f));
                 });
                 this->ui->actionRecent->menu()->addAction(openRecent);
             }
@@ -1516,14 +1518,14 @@ void MainWindow::on_actionClose_comic_triggered()
 void MainWindow::on_actionOpen_directory_triggered()
 {
     auto res = QFileDialog::getExistingDirectory(this);
-    if(!res.isEmpty()) this->loadComic(createComicSource(res));
+    if(!res.isEmpty()) this->loadComic(createComicSource(this, res));
 }
 
 void MainWindow::on_actionOpen_triggered()
 {
     auto res = QFileDialog::getOpenFileName(
       this, QString{}, QString{}, "Zip archives (*.zip *.cbz);;Any file (*.*)");
-    if(!res.isEmpty()) this->loadComic(createComicSource(res));
+    if(!res.isEmpty()) this->loadComic(createComicSource(this, res));
 }
 
 void MainWindow::on_actionReload_triggered()
@@ -1532,7 +1534,7 @@ void MainWindow::on_actionReload_triggered()
     int currentPage = this->ui->view->currentPage();
     if(src)
     {
-        this->loadComic(createComicSource(src->getFilePath()));
+        this->loadComic(createComicSource(this, src->getFilePath()));
         this->ui->view->goToPage(currentPage);
     }
 }
@@ -1819,7 +1821,7 @@ void MainWindow::on_actionHydrus_search_query_triggered()
     if(!finalQuery.isEmpty())
     {
         finalQuery = "hydrus://" + finalQuery;
-        this->loadComic(createComicSource(finalQuery));
+        this->loadComic(createComicSource(this, finalQuery));
     }
 }
 
