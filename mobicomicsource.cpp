@@ -55,7 +55,6 @@ MobiComicSource::MobiComicSource(const QString& path)
         }
     }
 
-
     this->id = QString::fromUtf8(QCryptographicHash::hash((path + +"!/\\++&" + QString::number(this->fileList.count())).toUtf8(), QCryptographicHash::Md5).toHex());
 }
 
@@ -63,6 +62,7 @@ int MobiComicSource::getPageCount() const
 {
     return this->fileList.length();
 }
+
 QPixmap MobiComicSource::getPagePixmap(int pageNum)
 {
     auto cacheKey = QPair{id, pageNum};
@@ -81,6 +81,7 @@ QString MobiComicSource::getPageFilePath(int pageNum)
     tmp.setAutoRemove(false);
     return "why";
 }
+
 QString MobiComicSource::getTitle() const
 {
     return this->meta.title;
@@ -90,10 +91,12 @@ QString MobiComicSource::getFilePath() const
 {
     return this->meta.path;
 }
+
 QString MobiComicSource::getPath() const
 {
     return QFileInfo(this->meta.path).path();
 }
+
 ComicSource* MobiComicSource::nextComic()
 {
     if(auto path = getNextFilePath(); !path.isEmpty()){
@@ -103,24 +106,28 @@ ComicSource* MobiComicSource::nextComic()
 }
 ComicSource* MobiComicSource::previousComic()
 {
-    if(auto path = getPrevFilePath(); !path.isEmpty())
-    {
+    if(auto path = getPrevFilePath(); !path.isEmpty()) {
         // return createComicSource(path);
     }
+
     return nullptr;
 }
+
 QString MobiComicSource::getID() const
 {
     return this->id;
 }
+
 bool MobiComicSource::hasNextComic()
 {
     return !(getNextFilePath().isEmpty());
 }
+
 bool MobiComicSource::hasPreviousComic()
 {
     return !(getPrevFilePath().isEmpty());
 }
+
 ComicMetadata MobiComicSource::getComicMetadata() const
 {
     ComicMetadata meta;
@@ -157,18 +164,13 @@ MobiComicSource::~MobiComicSource()
 }
 QString MobiComicSource::getNextFilePath()
 {
-    qDebug()<<"get next file";
     readNeighborList();
     auto length = cachedNeighborList.length();
 
-    qDebug()<<"neighbour files length: "<<length;
-    qDebug()<<"test for current path:"<<this->getFilePath();
-    for(int i = 0; i < length - 1; i++)
-    {
+    for(int i = 0; i < length - 1; i++) {
         if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
             return cachedNeighborList[i + 1].absoluteFilePath();
     }
-    qDebug()<<"not found";
 
     return {};
 }
@@ -178,8 +180,7 @@ QString MobiComicSource::getPrevFilePath()
     readNeighborList();
 
     auto length = cachedNeighborList.length();
-    for(int i = 1; i < length; i++)
-    {
+    for(int i = 1; i < length; i++) {
         if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
             return cachedNeighborList[i - 1].absoluteFilePath();
     }
@@ -188,27 +189,27 @@ QString MobiComicSource::getPrevFilePath()
 }
 void MobiComicSource::readNeighborList()
 {
-    if(cachedNeighborList.isEmpty())
+    if(!cachedNeighborList.isEmpty())
+        return;
+
+    QDir dir(this->getPath());
+    dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+
+    QCollator collator;
+    collator.setNumericMode(true);
+
+    QMimeDatabase mimeDb;
+    qDebug()<<"current dir files count: "<<dir.entryInfoList().length();
+    for(const auto& entry: dir.entryInfoList())
     {
-        QDir dir(this->getPath());
-        dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-
-        QCollator collator;
-        collator.setNumericMode(true);
-
-        QMimeDatabase mimeDb;
-        qDebug()<<"current dir files count: "<<dir.entryInfoList().length();
-        for(const auto& entry: dir.entryInfoList())
+        if(mimeDb.mimeTypeForFile(entry).inherits("application/x-mobipocket-ebook"))
         {
-            if(mimeDb.mimeTypeForFile(entry).inherits("application/x-mobipocket-ebook"))
-            {
-                cachedNeighborList.append(entry);
-            }
+            cachedNeighborList.append(entry);
         }
-
-        std::sort(cachedNeighborList.begin(), cachedNeighborList.end(),
-                  [&collator](const QFileInfo& file1, const QFileInfo& file2) {
-                      return collator.compare(file1.fileName(), file2.fileName()) < 0;
-                  });
     }
+
+    std::sort(cachedNeighborList.begin(), cachedNeighborList.end(),
+              [&collator](const QFileInfo& file1, const QFileInfo& file2) {
+                  return collator.compare(file1.fileName(), file2.fileName()) < 0;
+              });
 }
