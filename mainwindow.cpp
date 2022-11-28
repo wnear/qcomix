@@ -119,7 +119,7 @@ MainWindow::MainWindow(QWidget* parent) :
     this->ui->mainToolBar->setFocusPolicy(Qt::NoFocus);
 }
 
-void MainWindow::init(const QString& profile, const QString& openFileName)
+void MainWindow::initSettings(const QString &profile)
 {
     auto userConfigLocation = QStandardPaths::locate(QStandardPaths::AppConfigLocation, profile + ".conf");
     if(profile == "default" && !QFile::exists(userConfigLocation))
@@ -137,12 +137,15 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
             }
         }
     }
-    if(QFile::exists(userConfigLocation))
-    {
+    if(QFile::exists(userConfigLocation)) {
         userProfile = new QSettings(userConfigLocation, QSettings::IniFormat);
     }
-    defaultSettings = new QSettings(":/default.conf", QSettings::IniFormat);
 
+    defaultSettings = new QSettings(":/default.conf", QSettings::IniFormat);
+}
+
+void MainWindow::loadSettings()
+{
     if(auto theme = getOption("theme").toString(); theme != "system")
     {
         static_cast<QApplication*>(QApplication::instance())->setStyle(QStyleFactory::create("fusion"));
@@ -519,22 +522,12 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
         adjustSidePanelWidth(this->ui->thumbnails->minimumWidth());
     }
 
-    if(! openFileName.isEmpty()){
-        auto comic = ComicCreator::instance()->createComicSource(this, openFileName);
-        this->loadComic(comic);
-        qDebug()<< "open from command line: "<<openFileName;
-        return;
-    }
 
-    if(MainWindow::getOption("openLastViewedOnStartup").toBool() ){
-        auto filename = readLastViewedFilePath();
-        qDebug()<< "try to open from last time: "<<filename;
-        if(QFileInfo(filename).exists()){
-            qDebug()<< "try to read from last time: exist. ";
-            this->loadComic(createComicSource(this, filename));
-        }
-    }
+}
 
+void MainWindow::init_openFiles(const QStringList &files)
+{
+    this->loadComic(files, true);
 }
 
 int MainWindow::getSavedPositionForFilePath(const QString& id)
@@ -818,6 +811,32 @@ void MainWindow::on_actionShow_menu_toggled(bool arg1)
     if(this->ui->menuBar->isVisible()) this->ui->actionHide_all->setChecked(false);
 }
 
+void MainWindow::loadComic(const QStringList& files, bool onStartup) {
+    //TODO:
+    //set playlist. and open the first book.
+    //
+    assert(files.count() <=1);
+    if(files.count()){
+        auto openFileName = files[0];
+        assert(! openFileName.isEmpty());
+        auto comic = ComicCreator::instance()->createComicSource(this, openFileName);
+        if(comic){
+            this->loadComic(comic);
+            qDebug()<< "open from command line: "<<openFileName;
+            return;
+        }
+    }
+
+    if(onStartup && MainWindow::getOption("openLastViewedOnStartup").toBool() ){
+        auto filename = readLastViewedFilePath();
+        qDebug()<< "try to open from last time: "<<filename;
+        if(QFileInfo(filename).exists()){
+            qDebug()<< "try to read from last time: exist. ";
+            this->loadComic(createComicSource(this, filename));
+        }
+    }
+}
+
 void MainWindow::loadComic(ComicSource* comic)
 {
     nameInWindowTitle.clear();
@@ -826,31 +845,22 @@ void MainWindow::loadComic(ComicSource* comic)
 
     if(comic && comic->getPageCount())
     {
-        if(getOption("useComicNameAsWindowTitle").toBool())
-        {
+        if(getOption("useComicNameAsWindowTitle").toBool()) {
             nameInWindowTitle = comic->getTitle();
-        }
-        else
-        {
+        } else {
             nameInWindowTitle = "qcomix";
         }
         statusbarFilepath = comic->getFilePath();
         statusbarTitle = comic->getTitle();
         statusbarFilename = QFileInfo{statusbarFilepath}.fileName();
 
-        if(getOption("useFirstPageAsWindowIcon").toBool() && comic->getPageCount() > 0)
-        {
-            if(comic->getPageCount() > 0)
-            {
+        if(getOption("useFirstPageAsWindowIcon").toBool() && comic->getPageCount() > 0) {
+            if(comic->getPageCount() > 0) {
                 setWindowIcon(comic->getPagePixmap(0).scaled(256, 256, Qt::KeepAspectRatio));
-            }
-            else
-            {
+            } else {
                 setWindowIcon(QIcon(":/icon.png"));
             }
-        }
-        else
-        {
+        } else {
             setWindowIcon(QIcon(":/icon.png"));
         }
 
@@ -1852,3 +1862,4 @@ void MainWindow::on_actionShow_statusbar_toggled(bool arg1)
     }
     setOption("showStatusbar", arg1);
 }
+
