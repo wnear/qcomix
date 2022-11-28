@@ -21,6 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QDebug>
 
+#include <QCommandLineOption>
+#include <QCommandLineParser>
+
 void customMsgHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
     QByteArray localMsg = msg.toLocal8Bit();
@@ -51,41 +54,38 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
     a.setApplicationName("qcomix");
     a.setApplicationDisplayName("qcomix");
+    a.setApplicationVersion("1.0b6~~");
     a.setQuitOnLastWindowClosed(true);
 
     //qInstallMessageHandler(&customMsgHandler);
 
     MainWindow w;
 
-    QString openFileName;
-    bool skipNext = true;
-    for(const auto& arg: a.arguments())
-    {
-        if(skipNext)
-        {
-            skipNext = false;
-            continue;
-        }
-        if(arg == "--profile")
-        {
-            skipNext = true;
-            continue;
-        }
-        if(!arg.isEmpty())
-        {
-            openFileName = arg;
-            break;
-        }
-    }
+    QCommandLineParser parser;
+    parser.setApplicationDescription("A Qt-based comic viewer, support rar, cbr, zip, cbr, epub, mobi.");
 
-    if(auto idx = a.arguments().indexOf("--profile"); idx != -1 && idx + 1 < a.arguments().length())
-    {
-        w.init(a.arguments().at(idx + 1), openFileName);
+    QCommandLineOption configOption(QStringList() << "c" << "profile",
+                                  QCoreApplication::translate("main", "Optional configuration file."));
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addPositionalArgument("<files>",
+                                  QCoreApplication::translate("main", "Comic books to open."));
+    parser.addOption(configOption);
+    parser.process(a);
+    auto books = parser.positionalArguments();
+    auto configfile = parser.value(configOption);
+
+    QString profile{"default"};
+    if(!configfile.isEmpty()){
+        profile = configfile;
     }
-    else
-    {
-        w.init("default", openFileName);
-    }
+    w.initSettings(profile);
+    w.loadSettings();
+    w.init_openFiles(books);
+
+    // qDebug()<<"config file is:"<<configfile;
+    // qDebug()<<"files to open: "<<args;
+    // return 1;
 
     w.show();
 
