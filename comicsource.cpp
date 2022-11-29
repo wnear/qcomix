@@ -404,6 +404,35 @@ ComicMetadata FileComicSource::getComicMetadata() const
     return res;
 }
 
+void FileComicSource::readNeighborList()
+{
+
+    if(!cachedNeighborList.isEmpty()){
+        return;
+    }
+
+    QDir dir(this->getPath());
+    dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+
+    QCollator collator;
+    collator.setNumericMode(true);
+
+    QMimeDatabase mimeDb;
+    assert(!signatureMimeStr.isEmpty());
+    for(const auto& entry: dir.entryInfoList())
+    {
+        if(mimeDb.mimeTypeForFile(entry).inherits(signatureMimeStr))
+        {
+            cachedNeighborList.append(entry);
+        }
+    }
+
+    std::sort(cachedNeighborList.begin(), cachedNeighborList.end(),
+              [&collator](const QFileInfo& file1, const QFileInfo& file2) {
+                  return collator.compare(file1.fileName(), file2.fileName()) < 0;
+              });
+}
+
 QString FileComicSource::getNextFilePath()
 {
     readNeighborList();
@@ -432,8 +461,11 @@ QString FileComicSource::getPrevFilePath()
     return {};
 }
 
-ZipComicSource::ZipComicSource(const QString& path):FileComicSource(path)
+ZipComicSource::ZipComicSource(const QString& path)
+    :FileComicSource(path)
 {
+    signatureMimeStr = "application/zip";
+
     QFileInfo f_info(path);
 
     this->zip = new QuaZip(this->path);
@@ -549,33 +581,6 @@ ZipComicSource::~ZipComicSource()
     {
         if(this->zip->isOpen()) this->zip->close();
         delete this->zip;
-    }
-}
-
-
-void ZipComicSource::readNeighborList()
-{
-    if(cachedNeighborList.isEmpty())
-    {
-        QDir dir(this->getPath());
-        dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-
-        QCollator collator;
-        collator.setNumericMode(true);
-
-        QMimeDatabase mimeDb;
-        for(const auto& entry: dir.entryInfoList())
-        {
-            if(mimeDb.mimeTypeForFile(entry).inherits("application/zip"))
-            {
-                cachedNeighborList.append(entry);
-            }
-        }
-
-        std::sort(cachedNeighborList.begin(), cachedNeighborList.end(),
-                  [&collator](const QFileInfo& file1, const QFileInfo& file2) {
-                      return collator.compare(file1.fileName(), file2.fileName()) < 0;
-                  });
     }
 }
 

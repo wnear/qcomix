@@ -13,7 +13,6 @@ public:
     virtual PageMetadata getPageMetadata(int pageNum) override;
     virtual QPixmap getPagePixmap(int pageNum) override;
     virtual QString getPageFilePath(int pageNum) override;
-    virtual void readNeighborList() override;
     virtual ~MobiComicSource();
 
 private:

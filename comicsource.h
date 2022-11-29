@@ -70,16 +70,16 @@ public:
     virtual ComicSource* previousComic() override;
     virtual bool hasNextComic() override;
     virtual bool hasPreviousComic() override;
-    virtual void readNeighborList() = 0;
+    virtual void readNeighborList();
 
     QString getNextFilePath();
     QString getPrevFilePath();
 
 protected:
+    QString signatureMimeStr{};
     QFileInfoList cachedNeighborList;
     QString path;
     QString id;
-    QString signatureMimeStr{"magicword"};
 };
 
 class ZipComicSource : public FileComicSource
@@ -93,7 +93,6 @@ public:
     virtual ~ZipComicSource();
 
 protected:
-    virtual void readNeighborList() override;
 
     QMutex zipM;
     QList<QuaZipFileInfo> m_zipFileInfoList;
