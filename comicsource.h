@@ -58,27 +58,28 @@ public:
 class FileComicSource : public ComicSource
 {
 public:
-  FileComicSource(const QString& path);
-  virtual QString getID() const override;
-  virtual QString getTitle() const override;
-  virtual ComicMetadata getComicMetadata() const override;
+    FileComicSource(const QString& path);
+    virtual QString getID() const override;
+    virtual QString getTitle() const override;
+    virtual ComicMetadata getComicMetadata() const override;
 
-  virtual QString getPath() const override;
-  virtual QString getFilePath() const override;
+    virtual QString getPath() const override;
+    virtual QString getFilePath() const override;
 
-  virtual ComicSource* nextComic() override;
-  virtual ComicSource* previousComic() override;
-  virtual bool hasNextComic() override;
-  virtual bool hasPreviousComic() override;
-  virtual void readNeighborList() = 0;
+    virtual ComicSource* nextComic() override;
+    virtual ComicSource* previousComic() override;
+    virtual bool hasNextComic() override;
+    virtual bool hasPreviousComic() override;
+    virtual void readNeighborList() = 0;
 
-protected:
     QString getNextFilePath();
     QString getPrevFilePath();
+
+protected:
     QFileInfoList cachedNeighborList;
     QString path;
     QString id;
-
+    QString signatureMimeStr{"magicword"};
 };
 
 class ZipComicSource : public FileComicSource

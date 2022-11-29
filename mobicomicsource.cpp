@@ -14,6 +14,7 @@
  * libmobi filetype matches Qt mimetype: filter more image types.
  */
 MobiComicSource::MobiComicSource(const QString& path)
+    :FileComicSource(path)
 {
     this->meta.f = nullptr;
     this->meta.mobi = nullptr;
@@ -87,46 +88,6 @@ QString MobiComicSource::getTitle() const
     return this->meta.title;
 }
 
-QString MobiComicSource::getFilePath() const
-{
-    return this->meta.path;
-}
-
-QString MobiComicSource::getPath() const
-{
-    return QFileInfo(this->meta.path).path();
-}
-
-ComicSource* MobiComicSource::nextComic()
-{
-    if(auto path = getNextFilePath(); !path.isEmpty()){
-        // return createComicSource(path);
-    }
-    return nullptr;
-}
-ComicSource* MobiComicSource::previousComic()
-{
-    if(auto path = getPrevFilePath(); !path.isEmpty()) {
-        // return createComicSource(path);
-    }
-
-    return nullptr;
-}
-
-QString MobiComicSource::getID() const
-{
-    return this->id;
-}
-
-bool MobiComicSource::hasNextComic()
-{
-    return !(getNextFilePath().isEmpty());
-}
-
-bool MobiComicSource::hasPreviousComic()
-{
-    return !(getPrevFilePath().isEmpty());
-}
 
 ComicMetadata MobiComicSource::getComicMetadata() const
 {
@@ -162,35 +123,12 @@ MobiComicSource::~MobiComicSource()
         fclose(this->meta.f);
     }
 }
-QString MobiComicSource::getNextFilePath()
-{
-    readNeighborList();
-    auto length = cachedNeighborList.length();
 
-    for(int i = 0; i < length - 1; i++) {
-        if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
-            return cachedNeighborList[i + 1].absoluteFilePath();
-    }
-
-    return {};
-}
-QString MobiComicSource::getPrevFilePath()
-{
-
-    readNeighborList();
-
-    auto length = cachedNeighborList.length();
-    for(int i = 1; i < length; i++) {
-        if(cachedNeighborList[i].absoluteFilePath() == this->getFilePath())
-            return cachedNeighborList[i - 1].absoluteFilePath();
-    }
-
-    return {};
-}
 void MobiComicSource::readNeighborList()
 {
-    if(!cachedNeighborList.isEmpty())
+    if(!cachedNeighborList.isEmpty()){
         return;
+    }
 
     QDir dir(this->getPath());
     dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
@@ -199,7 +137,6 @@ void MobiComicSource::readNeighborList()
     collator.setNumericMode(true);
 
     QMimeDatabase mimeDb;
-    qDebug()<<"current dir files count: "<<dir.entryInfoList().length();
     for(const auto& entry: dir.entryInfoList())
     {
         if(mimeDb.mimeTypeForFile(entry).inherits("application/x-mobipocket-ebook"))
