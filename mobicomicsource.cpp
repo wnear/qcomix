@@ -16,6 +16,7 @@
 MobiComicSource::MobiComicSource(const QString& path)
     :FileComicSource(path)
 {
+    signatureMimeStr = "application/x-mobipocket-ebook";
     this->meta.f = nullptr;
     this->meta.mobi = nullptr;
     this->meta.rawml = nullptr;
@@ -124,29 +125,3 @@ MobiComicSource::~MobiComicSource()
     }
 }
 
-void MobiComicSource::readNeighborList()
-{
-    if(!cachedNeighborList.isEmpty()){
-        return;
-    }
-
-    QDir dir(this->getPath());
-    dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-
-    QCollator collator;
-    collator.setNumericMode(true);
-
-    QMimeDatabase mimeDb;
-    for(const auto& entry: dir.entryInfoList())
-    {
-        if(mimeDb.mimeTypeForFile(entry).inherits("application/x-mobipocket-ebook"))
-        {
-            cachedNeighborList.append(entry);
-        }
-    }
-
-    std::sort(cachedNeighborList.begin(), cachedNeighborList.end(),
-              [&collator](const QFileInfo& file1, const QFileInfo& file2) {
-                  return collator.compare(file1.fileName(), file2.fileName()) < 0;
-              });
-}
