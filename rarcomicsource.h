@@ -9,7 +9,6 @@ public:
     virtual QPixmap getPagePixmap(int pageNum) override;
     virtual QString getPageFilePath(int pageNum) override;
     virtual PageMetadata getPageMetadata(int pageNum) override;
-    virtual void readNeighborList() override;
     virtual ~RarComicSource();
 
 protected:

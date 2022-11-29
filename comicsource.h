@@ -31,6 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 class QuaZip;
 class QuaZipFile;
 
+//QUrl, QString, QIODevice.
 class ComicSource
 {
 public:
@@ -57,27 +58,28 @@ public:
 class FileComicSource : public ComicSource
 {
 public:
-  FileComicSource(const QString& path);
-  virtual QString getID() const override;
-  virtual QString getTitle() const override;
-  virtual ComicMetadata getComicMetadata() const override;
+    FileComicSource(const QString& path);
+    virtual QString getID() const override;
+    virtual QString getTitle() const override;
+    virtual ComicMetadata getComicMetadata() const override;
 
-  virtual QString getPath() const override;
-  virtual QString getFilePath() const override;
+    virtual QString getPath() const override;
+    virtual QString getFilePath() const override;
 
-  virtual ComicSource* nextComic() override;
-  virtual ComicSource* previousComic() override;
-  virtual bool hasNextComic() override;
-  virtual bool hasPreviousComic() override;
-  virtual void readNeighborList() = 0;
+    virtual ComicSource* nextComic() override;
+    virtual ComicSource* previousComic() override;
+    virtual bool hasNextComic() override;
+    virtual bool hasPreviousComic() override;
+    virtual void readNeighborList();
 
-protected:
     QString getNextFilePath();
     QString getPrevFilePath();
+
+protected:
+    QString signatureMimeStr{};
     QFileInfoList cachedNeighborList;
     QString path;
     QString id;
-
 };
 
 class ZipComicSource : public FileComicSource
@@ -91,7 +93,6 @@ public:
     virtual ~ZipComicSource();
 
 protected:
-    virtual void readNeighborList() override;
 
     QMutex zipM;
     QList<QuaZipFileInfo> m_zipFileInfoList;
@@ -171,7 +172,8 @@ private:
     QStringList filePaths;
 };
 
-ComicSource* createComicSource(const QString& path);
+ComicSource* createComicSource_inner(const QString &path);
+ComicSource* createComicSource_fn(const QString& path);
 bool isImage(const QString &filename);
 
 #endif // COMICSOURCE_H

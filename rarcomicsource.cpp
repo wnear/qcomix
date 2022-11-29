@@ -14,7 +14,10 @@
 #include <QImageReader>
 #include <QDebug>
 
-RarComicSource::RarComicSource(const QString& path):FileComicSource(path) {
+RarComicSource::RarComicSource(const QString& path)
+            :FileComicSource(path)
+{
+    signatureMimeStr = "application/rar";
     //rar vt, list file info.
 
     // QObject::connect(&proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), [=](int exitCode, QProcess::ExitStatus status){ });
@@ -55,12 +58,21 @@ RarComicSource::RarComicSource(const QString& path):FileComicSource(path) {
                 if(isImg)
                     m_rarFileInfoList.push_back(cur);
             }
+            //sort
         }
     }
-    auto len = m_rarFileInfoList.size();
-    for(auto i = 0; i< len; i++){
-        auto cur = m_rarFileInfoList[i];
-    }
+    // auto len = m_rarFileInfoList.size();
+    // for(auto i = 0; i< len; i++){
+    //     auto cur = m_rarFileInfoList[i];
+    // }
+    QCollator collator;
+    collator.setNumericMode(true);
+
+    std::sort(
+      this->m_rarFileInfoList.begin(), this->m_rarFileInfoList.end(),
+      [&collator](const PageMetadata& file1, const PageMetadata& file2) {
+          return collator.compare(file1.fileName, file2.fileName) < 0;
+      });
 }
 
 RarComicSource::~RarComicSource() {}
@@ -143,26 +155,3 @@ PageMetadata RarComicSource::getPageMetadata(int pageNum) {
     return res;
 }
 
-void RarComicSource::readNeighborList()
-{
-    if(!cachedNeighborList.isEmpty())
-        return;
-
-    QDir dir(this->getPath());
-    dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-
-    QCollator collator;
-    collator.setNumericMode(true);
-
-    QMimeDatabase mimeDb;
-    for(const auto& entry: dir.entryInfoList()) {
-        if(mimeDb.mimeTypeForFile(entry).inherits("application/rar")) {
-            cachedNeighborList.append(entry);
-        }
-    }
-
-    std::sort(cachedNeighborList.begin(), cachedNeighborList.end(),
-              [&collator](const QFileInfo& file1, const QFileInfo& file2) {
-                  return collator.compare(file1.fileName(), file2.fileName()) < 0;
-              });
-}

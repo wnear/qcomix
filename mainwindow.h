@@ -67,7 +67,9 @@ public:
     static QColor getMostCommonEdgeColor(const QImage& left_img, const QImage& right_img);
 
     explicit MainWindow(QWidget* parent = nullptr);
-    void init(const QString& profile, const QString& openFileName);
+    void initSettings(const QString &profile = "default");
+    void loadSettings();
+    void init_openFiles(const QStringList &files);
     ~MainWindow() override;
 
 public slots:
@@ -136,6 +138,7 @@ protected:
 
 private:
     void loadComic(ComicSource* src);
+    void loadComic(const QStringList& path, bool onStartup = false);
     void nextPage();
     void previousPage();
     void stopThreads();

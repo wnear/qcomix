@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <qnamespace.h>
 #include "aboutdialog.h"
 #include "comicsource.h"
+#include "comiccreator.h"
 #include "imagecache.h"
 #include "imagepreloader.h"
 #include "thumbnailer.h"
@@ -106,7 +107,7 @@ MainWindow::MainWindow(QWidget* parent) :
     this->ui->fileSystemView->setSelectionMode(QAbstractItemView::SingleSelection);
     this->ui->fileSystemView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
     this->ui->fileSystemView->header()->setStretchLastSection(false);
-    this->ui->fileSystemView->setExpandsOnDoubleClick(false);
+    this->ui->fileSystemView->setExpandsOnDoubleClick(true);
     this->ui->bookmarksTreeWidget->setItemDelegateForColumn(0, new NoEditDelegate(this));
     this->ui->bookmarksTreeWidget->setSortingEnabled(true);
     this->ui->bookmarksTreeWidget->setIndentation(0);
@@ -118,7 +119,7 @@ MainWindow::MainWindow(QWidget* parent) :
     this->ui->mainToolBar->setFocusPolicy(Qt::NoFocus);
 }
 
-void MainWindow::init(const QString& profile, const QString& openFileName)
+void MainWindow::initSettings(const QString &profile)
 {
     auto userConfigLocation = QStandardPaths::locate(QStandardPaths::AppConfigLocation, profile + ".conf");
     if(profile == "default" && !QFile::exists(userConfigLocation))
@@ -136,12 +137,15 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
             }
         }
     }
-    if(QFile::exists(userConfigLocation))
-    {
+    if(QFile::exists(userConfigLocation)) {
         userProfile = new QSettings(userConfigLocation, QSettings::IniFormat);
     }
-    defaultSettings = new QSettings(":/default.conf", QSettings::IniFormat);
 
+    defaultSettings = new QSettings(":/default.conf", QSettings::IniFormat);
+}
+
+void MainWindow::loadSettings()
+{
     if(auto theme = getOption("theme").toString(); theme != "system")
     {
         static_cast<QApplication*>(QApplication::instance())->setStyle(QStyleFactory::create("fusion"));
@@ -476,9 +480,10 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
             [this](const QModelIndex& index) {
                 auto filePath = this->fileSystemModel.fileInfo(this->fileSystemFilterModel.mapToSource(index)).absoluteFilePath();
                 this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapToSource(index));
-                if(auto comic = createComicSource(filePath))
+                if(auto comic = createComicSource(this, filePath))
                 {
-                    this->loadComic(comic);
+                    if(comic && comic->getPageCount())
+                        this->loadComic(comic);
                 }
             });
 
@@ -497,7 +502,7 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
         auto page = item->text(1).toInt();
         if(QFileInfo::exists(filePath))
         {
-            if(auto comic = createComicSource(filePath))
+            if(auto comic = createComicSource(this, filePath))
             {
                 this->loadComic(comic);
                 this->ui->view->goToPage(page);
@@ -517,21 +522,12 @@ void MainWindow::init(const QString& profile, const QString& openFileName)
         adjustSidePanelWidth(this->ui->thumbnails->minimumWidth());
     }
 
-    if(! openFileName.isEmpty()){
-        this->loadComic(createComicSource(openFileName));
-        qDebug()<< "open from command line: "<<openFileName;
-        return;
-    }
 
-    if(MainWindow::getOption("openLastViewedOnStartup").toBool() ){
-        auto filename = readLastViewedFilePath();
-        qDebug()<< "try to open from last time: "<<filename;
-        if(QFileInfo(filename).exists()){
-            qDebug()<< "try to read from last time: exist. ";
-            this->loadComic(createComicSource(filename));
-        }
-    }
+}
 
+void MainWindow::init_openFiles(const QStringList &files)
+{
+    this->loadComic(files, true);
 }
 
 int MainWindow::getSavedPositionForFilePath(const QString& id)
@@ -815,71 +811,90 @@ void MainWindow::on_actionShow_menu_toggled(bool arg1)
     if(this->ui->menuBar->isVisible()) this->ui->actionHide_all->setChecked(false);
 }
 
-void MainWindow::loadComic(ComicSource* src)
+void MainWindow::loadComic(const QStringList& files, bool onStartup) {
+    //TODO:
+    //set playlist. and open the first book.
+    //
+    assert(files.count() <=1);
+    if(files.count()){
+        auto openFileName = files[0];
+        assert(! openFileName.isEmpty());
+        auto comic = ComicCreator::instance()->createComicSource(this, openFileName);
+        if(comic){
+            this->loadComic(comic);
+            qDebug()<< "open from command line: "<<openFileName;
+            return;
+        }
+    }
+
+    if(onStartup && MainWindow::getOption("openLastViewedOnStartup").toBool() ){
+        auto filename = readLastViewedFilePath();
+        qDebug()<< "try to open from last time: "<<filename;
+        if(QFileInfo(filename).exists()){
+            qDebug()<< "try to read from last time: exist. ";
+            this->loadComic(createComicSource(this, filename));
+        }
+    }
+}
+
+void MainWindow::loadComic(ComicSource* comic)
 {
+    if(comic == nullptr || comic->getPageCount() == 0)
+        return;
     nameInWindowTitle.clear();
     currentPageInWindowTitle = 0;
     maxPageInWindowTitle = 0;
 
-    if(src)
+    if(comic && comic->getPageCount())
     {
-        if(getOption("useComicNameAsWindowTitle").toBool())
-        {
-            nameInWindowTitle = src->getTitle();
-        }
-        else
-        {
+        if(getOption("useComicNameAsWindowTitle").toBool()) {
+            nameInWindowTitle = comic->getTitle();
+        } else {
             nameInWindowTitle = "qcomix";
         }
-        statusbarFilepath = src->getFilePath();
-        statusbarTitle = src->getTitle();
+        statusbarFilepath = comic->getFilePath();
+        statusbarTitle = comic->getTitle();
         statusbarFilename = QFileInfo{statusbarFilepath}.fileName();
 
-        if(getOption("useFirstPageAsWindowIcon").toBool() && src->getPageCount() > 0)
-        {
-            if(src->getPageCount() > 0)
-            {
-                setWindowIcon(src->getPagePixmap(0).scaled(256, 256, Qt::KeepAspectRatio));
-            }
-            else
-            {
+        if(getOption("useFirstPageAsWindowIcon").toBool() && comic->getPageCount() > 0) {
+            if(comic->getPageCount() > 0) {
+                setWindowIcon(comic->getPagePixmap(0).scaled(256, 256, Qt::KeepAspectRatio));
+            } else {
                 setWindowIcon(QIcon(":/icon.png"));
             }
-        }
-        else
-        {
+        } else {
             setWindowIcon(QIcon(":/icon.png"));
         }
 
-        const QModelIndex rootIndex = fileSystemModel.index(src->getFilePath());
+        const QModelIndex rootIndex = fileSystemModel.index(comic->getFilePath());
         this->ui->fileSystemView->setCurrentIndex(fileSystemFilterModel.mapFromSource(rootIndex));
-        this->ui->fileSystemView->setExpanded(fileSystemFilterModel.mapFromSource(rootIndex), false);
-        this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapFromSource(rootIndex));
+        // this->ui->fileSystemView->setExpanded(fileSystemFilterModel.mapFromSource(rootIndex), false);
+        // this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapFromSource(rootIndex));
 
-        this->saveLastViewedFilePath(src->getFilePath());
-        this->addToRecentFiles(src->getFilePath());
+        this->saveLastViewedFilePath(comic->getFilePath());
+        this->addToRecentFiles(comic->getFilePath());
     } else {
-        nameInWindowTitle = "qcomix";
-        setWindowIcon(QIcon(":/icon.png"));
-        statusbarFilepath.clear();
-        statusbarTitle.clear();
-        statusbarCurrPage = 0;
-        statusbarPageCnt = 0;
+        // nameInWindowTitle = "qcomix";
+        // setWindowIcon(QIcon(":/icon.png"));
+        // statusbarFilepath.clear();
+        // statusbarTitle.clear();
+        // statusbarCurrPage = 0;
+        // statusbarPageCnt = 0;
 
-        const QModelIndex rootIndex = fileSystemModel.index("");
-        this->ui->fileSystemView->setCurrentIndex(fileSystemFilterModel.mapFromSource(rootIndex));
-        this->ui->fileSystemView->setExpanded(fileSystemFilterModel.mapFromSource(rootIndex), true);
-        this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapFromSource(rootIndex));
+        // const QModelIndex rootIndex = fileSystemModel.index("");
+        // this->ui->fileSystemView->setCurrentIndex(fileSystemFilterModel.mapFromSource(rootIndex));
+        // this->ui->fileSystemView->setExpanded(fileSystemFilterModel.mapFromSource(rootIndex), true);
+        // this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapFromSource(rootIndex));
 
-        this->saveLastViewedFilePath({});
+        // this->saveLastViewedFilePath({});
     }
 
-    this->rebuildOpenWithMenu(src);
+    this->rebuildOpenWithMenu(comic);
 
     updateWindowTitle();
     updateStatusbar();
 
-    auto oldComic = this->ui->view->setComicSource(src);
+    auto oldComic = this->ui->view->setComicSource(comic);
 
     imagePreloader->stopCurrentWork();
 
@@ -890,11 +905,11 @@ void MainWindow::loadComic(ComicSource* src)
 
     delete oldComic;
 
-    if(src)
+    if(comic)
     {
         for(auto t: std::as_const(thumbnailerThreads))
         {
-            t->startWorking(src);
+            t->startWorking(comic);
             if(this->ui->view->currentPage() > 6)
             {
                 t->refocus(this->ui->view->currentPage());
@@ -1155,7 +1170,7 @@ void MainWindow::rebuildRecentFilesMenu()
                 auto openRecent = new QAction{this->ui->actionRecent->menu()};
                 openRecent->setText((hydrusEnabled && f.startsWith("hydrus://")) ? f : info.fileName());
                 connect(openRecent, &QAction::triggered, [this, f]() {
-                    this->loadComic(createComicSource(f));
+                    this->loadComic(createComicSource(this, f));
                 });
                 this->ui->actionRecent->menu()->addAction(openRecent);
             }
@@ -1515,14 +1530,14 @@ void MainWindow::on_actionClose_comic_triggered()
 void MainWindow::on_actionOpen_directory_triggered()
 {
     auto res = QFileDialog::getExistingDirectory(this);
-    if(!res.isEmpty()) this->loadComic(createComicSource(res));
+    if(!res.isEmpty()) this->loadComic(createComicSource(this, res));
 }
 
 void MainWindow::on_actionOpen_triggered()
 {
     auto res = QFileDialog::getOpenFileName(
       this, QString{}, QString{}, "Zip archives (*.zip *.cbz);;Any file (*.*)");
-    if(!res.isEmpty()) this->loadComic(createComicSource(res));
+    if(!res.isEmpty()) this->loadComic(createComicSource(this, res));
 }
 
 void MainWindow::on_actionReload_triggered()
@@ -1531,7 +1546,7 @@ void MainWindow::on_actionReload_triggered()
     int currentPage = this->ui->view->currentPage();
     if(src)
     {
-        this->loadComic(createComicSource(src->getFilePath()));
+        this->loadComic(createComicSource(this, src->getFilePath()));
         this->ui->view->goToPage(currentPage);
     }
 }
@@ -1567,9 +1582,18 @@ void MainWindow::on_actionLast_page_triggered()
 
 void MainWindow::on_actionNext_comic_triggered()
 {
+    qDebug()<<__PRETTY_FUNCTION__<<"triggered";
     if(auto comic = this->ui->view->comicSource())
     {
-        if(comic->hasNextComic()) this->loadComic(comic->nextComic());
+        auto filecomic = dynamic_cast<FileComicSource*>(comic);
+        if(filecomic){
+            if(filecomic->hasNextComic()){
+                this->loadComic({filecomic->getNextFilePath()});
+            }
+        } else {
+            if(comic->hasNextComic())
+                this->loadComic(comic->nextComic());
+        }
     }
 }
 
@@ -1577,7 +1601,15 @@ void MainWindow::on_actionPrevious_comic_triggered()
 {
     if(auto comic = this->ui->view->comicSource())
     {
-        if(comic->hasPreviousComic()) this->loadComic(comic->previousComic());
+        auto filecomic = dynamic_cast<FileComicSource*>(comic);
+        if(filecomic){
+            if(filecomic->hasPreviousComic()){
+                this->loadComic({filecomic->getPrevFilePath()});
+            }
+        } else {
+            if(comic->hasPreviousComic())
+                this->loadComic(comic->previousComic());
+        }
     }
 }
 
@@ -1818,7 +1850,7 @@ void MainWindow::on_actionHydrus_search_query_triggered()
     if(!finalQuery.isEmpty())
     {
         finalQuery = "hydrus://" + finalQuery;
-        this->loadComic(createComicSource(finalQuery));
+        this->loadComic(createComicSource(this, finalQuery));
     }
 }
 
@@ -1849,3 +1881,4 @@ void MainWindow::on_actionShow_statusbar_toggled(bool arg1)
     }
     setOption("showStatusbar", arg1);
 }
+

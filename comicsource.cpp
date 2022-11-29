@@ -46,6 +46,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <cstdio>
 #include <QThread>
 
+#include <QFutureWatcher>
+#include <QtConcurrent/QtConcurrentRun>
+#include <QTimer>
+
 bool isImage(const QString &filename){
 
     QMimeDatabase mimeDb;
@@ -157,7 +161,7 @@ bool DirectoryComicSource::hasNextComic()
 
 ComicSource* DirectoryComicSource::previousComic()
 {
-    if(auto path = getPrevFilePath(); !path.isEmpty()) return createComicSource(path);
+    // if(auto path = getPrevFilePath(); !path.isEmpty()) return createComicSource(path);
     return nullptr;
 }
 
@@ -168,7 +172,7 @@ QString DirectoryComicSource::getID() const
 
 ComicSource* DirectoryComicSource::nextComic()
 {
-    if(auto path = getNextFilePath(); !path.isEmpty()) return createComicSource(path);
+    // if(auto path = getNextFilePath(); !path.isEmpty()) return createComicSource(path);
     return nullptr;
 }
 
@@ -253,7 +257,7 @@ void DirectoryComicSource::readNeighborList()
     }
 }
 
-ComicSource* createComicSource(const QString& path)
+ComicSource* createComicSource_inner(const QString& path)
 {
     if(path.isEmpty())
         return nullptr;
@@ -265,44 +269,77 @@ ComicSource* createComicSource(const QString& path)
     }
 
     auto fileInfo = QFileInfo(path);
-    if(fileInfo.exists())
-    {
-        if(fileInfo.isDir())
-        {
+    do {
+        if(fileInfo.exists() == false)
+            break;
+        if(fileInfo.isDir()){
             return new DirectoryComicSource(path);
         }
-        else
-        {
-            QMimeDatabase mimeDb;
-            auto mime = mimeDb.mimeTypeForFile(path);
-            qDebug()<<"current file mimetype is: "<<mime.name();
-            if(mime.inherits("applicaton/vnd.comicbook+zip")){
-                return new ZipComicSource(path);
-            } else if (mime.inherits("application/vnd.comicbook-rar")){
-                qDebug()<<"cbr file";
-                return new RarComicSource(path);
-            } else if (mime.inherits("application/vnd.rar")){
-                qDebug()<<"cbr file";
-                return new RarComicSource(path);
-            } else if (mime.inherits("application/epub+zip")) {
-                qDebug()<<"epub file";
-                return new EpubComicSource(path);
-            } else if (mime.inherits("application/x-mobipocket-ebook")) {
-                return new MobiComicSource(path);
-            } else if(mime.inherits("application/pdf")) {
-                qDebug()<<".pdf file";
-            } else if(mimeDb.mimeTypeForFile(fileInfo).inherits("application/zip")) {
-                return new ZipComicSource(path);
-            } else if(mime.inherits("application/rar")) {
-                qDebug()<<"rar file";
-                return new RarComicSource(path);
-            } else if(DirectoryComicSource::fileSupported(fileInfo)) {
-                return new DirectoryComicSource{path};
-            }
-        }
-    }
 
+        QMimeDatabase mimeDb;
+        auto mime = mimeDb.mimeTypeForFile(path);
+        qDebug()<<"current file mimetype is: "<<mime.name();
+        if(mime.inherits("applicaton/vnd.comicbook+zip")){
+            return new ZipComicSource(path);
+        } else if (mime.inherits("application/vnd.comicbook-rar")){
+            qDebug()<<"cbr file";
+            return new RarComicSource(path);
+        } else if (mime.inherits("application/vnd.rar")){
+            qDebug()<<"cbr file";
+            return new RarComicSource(path);
+        } else if (mime.inherits("application/epub+zip")) {
+            qDebug()<<"epub file";
+            return new EpubComicSource(path);
+        } else if (mime.inherits("application/x-mobipocket-ebook")) {
+            return new MobiComicSource(path);
+        } else if(mime.inherits("application/pdf")) {
+            qDebug()<<".pdf file";
+        } else if(mimeDb.mimeTypeForFile(fileInfo).inherits("application/zip")) {
+            return new ZipComicSource(path);
+        } else if(mime.inherits("application/rar")) {
+            qDebug()<<"rar file";
+            return new RarComicSource(path);
+        } else if(DirectoryComicSource::fileSupported(fileInfo)) {
+            return new DirectoryComicSource{path};
+        }
+
+    } while(0);
     return nullptr;
+}
+
+ComicSource* createComicSource_fn(const QString& path)
+{
+    QEventLoop evlp;
+    QTimer taskTimer; // timer for task.
+    QFutureWatcher<ComicSource*> watcher;
+    QObject::connect(&watcher, &QFutureWatcher<ComicSource *>::canceled, [&](){
+                evlp.quit();
+                taskTimer.stop();
+                qDebug() << "comic created canceal, timer stop.";
+            });
+    QObject::connect(&watcher, &QFutureWatcher<ComicSource *>::finished, [&](){
+                evlp.quit();
+                taskTimer.stop();
+                qDebug() << "comic created done, timer stop.";
+            });
+    int step = 0;
+    taskTimer.setInterval(500);
+    QObject::connect(&taskTimer, &QTimer::timeout, [&](){
+                         qDebug()<<"timeout, step = "<<step;
+                         step++;
+                     });
+    taskTimer.start();
+
+    auto future = QtConcurrent::run(
+                          createComicSource_inner,
+                          path
+                      );
+    watcher.setFuture(future);
+    evlp.exec();
+    if(future.isCanceled())
+        return nullptr;
+    assert(future.isFinished());
+    return future.result();
 }
 
 FileComicSource::FileComicSource(const QString& path) {
@@ -334,7 +371,7 @@ ComicSource* FileComicSource::nextComic()
 {
     if(auto path = getNextFilePath(); !path.isEmpty())
     {
-        return createComicSource(path);
+        // return createComicSource(path);
     }
     return nullptr;
 }
@@ -343,7 +380,7 @@ ComicSource* FileComicSource::previousComic()
 {
     if(auto path = getPrevFilePath(); !path.isEmpty())
     {
-        return createComicSource(path);
+        // return createComicSource(path);
     }
     return nullptr;
 }
@@ -365,6 +402,35 @@ ComicMetadata FileComicSource::getComicMetadata() const
     res.fileName = path;
     res.valid = true;
     return res;
+}
+
+void FileComicSource::readNeighborList()
+{
+
+    if(!cachedNeighborList.isEmpty()){
+        return;
+    }
+
+    QDir dir(this->getPath());
+    dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+
+    QCollator collator;
+    collator.setNumericMode(true);
+
+    QMimeDatabase mimeDb;
+    assert(!signatureMimeStr.isEmpty());
+    for(const auto& entry: dir.entryInfoList())
+    {
+        if(mimeDb.mimeTypeForFile(entry).inherits(signatureMimeStr))
+        {
+            cachedNeighborList.append(entry);
+        }
+    }
+
+    std::sort(cachedNeighborList.begin(), cachedNeighborList.end(),
+              [&collator](const QFileInfo& file1, const QFileInfo& file2) {
+                  return collator.compare(file1.fileName(), file2.fileName()) < 0;
+              });
 }
 
 QString FileComicSource::getNextFilePath()
@@ -395,8 +461,11 @@ QString FileComicSource::getPrevFilePath()
     return {};
 }
 
-ZipComicSource::ZipComicSource(const QString& path):FileComicSource(path)
+ZipComicSource::ZipComicSource(const QString& path)
+    :FileComicSource(path)
 {
+    signatureMimeStr = "application/zip";
+
     QFileInfo f_info(path);
 
     this->zip = new QuaZip(this->path);
@@ -512,33 +581,6 @@ ZipComicSource::~ZipComicSource()
     {
         if(this->zip->isOpen()) this->zip->close();
         delete this->zip;
-    }
-}
-
-
-void ZipComicSource::readNeighborList()
-{
-    if(cachedNeighborList.isEmpty())
-    {
-        QDir dir(this->getPath());
-        dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
-
-        QCollator collator;
-        collator.setNumericMode(true);
-
-        QMimeDatabase mimeDb;
-        for(const auto& entry: dir.entryInfoList())
-        {
-            if(mimeDb.mimeTypeForFile(entry).inherits("application/zip"))
-            {
-                cachedNeighborList.append(entry);
-            }
-        }
-
-        std::sort(cachedNeighborList.begin(), cachedNeighborList.end(),
-                  [&collator](const QFileInfo& file1, const QFileInfo& file2) {
-                      return collator.compare(file1.fileName(), file2.fileName()) < 0;
-                  });
     }
 }
 

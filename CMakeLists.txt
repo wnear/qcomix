@@ -22,6 +22,7 @@ set(SOURCES
   aboutdialog.h
   comicsource.cpp
   comicsource.h
+  comiccreator.cpp
   epubcomicsource.cpp
   mobicomicsource.cpp
   rarcomicsource.cpp
