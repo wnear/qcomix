@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "mobicomicsource.h"
 #include "rarcomicsource.h"
+#include "pdfcomicsource.h"
 
 #include <QFileInfo>
 #include <QCollator>
@@ -294,6 +295,7 @@ ComicSource* createComicSource_inner(const QString& path)
             return new MobiComicSource(path);
         } else if(mime.inherits("application/pdf")) {
             qDebug()<<".pdf file";
+            return new PDFComicSource(path);
         } else if(mimeDb.mimeTypeForFile(fileInfo).inherits("application/zip")) {
             return new ZipComicSource(path);
         } else if(mime.inherits("application/rar")) {
