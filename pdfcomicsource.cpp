@@ -9,7 +9,7 @@ PDFComicSource::PDFComicSource(const QString& path) : FileComicSource(path)
     m_document = Poppler::Document::load(this->path);
 
     if(!m_document || m_document->isLocked() ){
-        qDebug()<<"faile to open";
+        qDebug()<<"faile to open, may be it's not a valid pdf file.";
         return;
     }
 
@@ -21,8 +21,11 @@ PDFComicSource::PDFComicSource(const QString& path) : FileComicSource(path)
         m_pageMetaDataList.push_back(cur);
     }
 }
-PDFComicSource::~PDFComicSource() {
+
+PDFComicSource::~PDFComicSource()
+{
     delete m_document;
+    m_document = nullptr;
 }
 
 int PDFComicSource::getPageCount() const
@@ -38,13 +41,12 @@ QPixmap PDFComicSource::getPagePixmap(int pageNum)
     if(auto img = ImageCache::cache().getImage(cacheKey); !img.isNull())
         return img;
 
-    // auto page = std::make_unique<Poppler::Page>(m_document->page(pageNum));
-    std::unique_ptr<Poppler::Page> page ;
     QMutexLocker lock(&m_openLock);
-
+    std::unique_ptr<Poppler::Page> page ;
     page.reset(m_document->page(pageNum));
-    auto img = QPixmap::fromImage(page->renderToImage());
-    // auto img = page->renderToImage();
+    //TODO:
+    //renderToImage(xres, yres)
+    auto img = QPixmap::fromImage(page->renderToImage(300, 300));
     if(!img.isNull()){
         ImageCache::cache().addImage(cacheKey, img);
     }
@@ -54,7 +56,6 @@ QPixmap PDFComicSource::getPagePixmap(int pageNum)
 
 QString PDFComicSource::getPageFilePath(int pageNum)
 {
-    // assert(0);
     return "virtual";
 }
 
