@@ -839,6 +839,8 @@ void MainWindow::loadComic(const QStringList& files, bool onStartup) {
 
 void MainWindow::loadComic(ComicSource* comic)
 {
+    if(comic == nullptr || comic->getPageCount() == 0)
+        return;
     nameInWindowTitle.clear();
     currentPageInWindowTitle = 0;
     maxPageInWindowTitle = 0;
@@ -1580,9 +1582,18 @@ void MainWindow::on_actionLast_page_triggered()
 
 void MainWindow::on_actionNext_comic_triggered()
 {
+    qDebug()<<__PRETTY_FUNCTION__<<"triggered";
     if(auto comic = this->ui->view->comicSource())
     {
-        if(comic->hasNextComic()) this->loadComic(comic->nextComic());
+        auto filecomic = dynamic_cast<FileComicSource*>(comic);
+        if(filecomic){
+            if(filecomic->hasNextComic()){
+                this->loadComic({filecomic->getNextFilePath()});
+            }
+        } else {
+            if(comic->hasNextComic())
+                this->loadComic(comic->nextComic());
+        }
     }
 }
 
@@ -1590,7 +1601,15 @@ void MainWindow::on_actionPrevious_comic_triggered()
 {
     if(auto comic = this->ui->view->comicSource())
     {
-        if(comic->hasPreviousComic()) this->loadComic(comic->previousComic());
+        auto filecomic = dynamic_cast<FileComicSource*>(comic);
+        if(filecomic){
+            if(filecomic->hasPreviousComic()){
+                this->loadComic({filecomic->getPrevFilePath()});
+            }
+        } else {
+            if(comic->hasPreviousComic())
+                this->loadComic(comic->previousComic());
+        }
     }
 }
 
