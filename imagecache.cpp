@@ -32,7 +32,6 @@ QPixmap ImageCache::getImage(const QPair<QString, int>& key)
 {
     QReadLocker lock(&this->mut);
     for(const auto& s: std::as_const(storage)) {
-        qDebug()<<QString("get image: %1, %2").arg(s.id).arg(s.page);
         if(s.id == key.first && s.page == key.second) {
             return s.data;
         }
@@ -42,20 +41,19 @@ QPixmap ImageCache::getImage(const QPair<QString, int>& key)
 
 void ImageCache::addImage(const QPair<QString, int>& key, const QPixmap& img)
 {
-    QWriteLocker lock(&mut);
-    if(!hasKey(key))
-    {
-        maintain();
-        storage.push_front(imgCacheEntry{key.first, key.second, img});
+    if(!hasKey(key)){
+        maintain(); // clear to have space.
     }
+
+    QWriteLocker lock(&mut);
+    storage.push_front(imgCacheEntry{key.first, key.second, img});
 }
 
 int ImageCache::hasKey(const QPair<QString, int>& key)
 {
-    for(const auto& s: std::as_const(storage))
-    {
-        if(s.page == key.second && s.id == key.first)
-        {
+    QReadLocker lock(&this->mut);
+    for(const auto& s: std::as_const(storage)) {
+        if(s.page == key.second && s.id == key.first) {
             return 2;
         }
     }
@@ -102,7 +100,6 @@ QPixmap ThumbCache::getPixmap(const QPair<QString, int>& key)
 void ThumbCache::addImage(const QPair<QString, int>& key, QPixmap img)
 {
     mut.lock();
-    qDebug()<<QString("add image: %1, %2").arg(key.first).arg(key.second);
     storage[key] = img;
     keys.push_back(key);
     mut.unlock();

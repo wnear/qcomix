@@ -726,6 +726,56 @@ void PageViewWidget::fitLeftRightImageToSize(int width, int height, int combined
     }
 }
 
+bool isSinglePage(int pageNum){
+    return true;
+}
+
+struct ImageInfo {
+    QPixmap image;
+    QPixmap imageScreen;
+    int pagenum;
+    QSize size;
+    QPoint position;
+    QPoint center;
+};
+
+//maybe onepage/two, or more.
+void preparePageBeforeUpdate_getpage(void){
+    QVector<int> cur;
+
+    int curmax, curmin;
+    bool doublepage;
+    bool ltor; //mangaMode;
+    bool forward = true;
+    int pagecount;
+    QVector<int> toconsider;
+    if (ltor) {
+    }
+    if( forward ) {
+        int cur = curmin;
+        for(int i = 1; i<=2; i++){
+            if(1){
+                toconsider.append(cur-i);
+            }
+        }
+    } else {
+        int cur = curmax;
+        for(int i = 1; i<=2; i++){
+            if(1)
+                toconsider.append(cur+i);
+        }
+    }
+
+    if( toconsider[0] || toconsider[1] ){ //isSinglePage;
+        toconsider.pop_back();
+    }
+    if(ltor && toconsider.size() > 1){
+        std::reverse(toconsider.begin(), toconsider.end());
+    }
+
+    //transform:
+}
+
 void PageViewWidget::paintEvent(QPaintEvent* event)
 {
     //check comicsource
@@ -742,25 +792,14 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
 
     // <<-- 1. calculate background color.
     QColor finalBkgColor;
-    if(mainViewBackground == "dynamic")
-    {
-        painter.fillRect(painter.viewport(), this->palette().color(QPalette::Window));
-        if(dynamicBackground.isValid())
-        {
-            painter.fillRect(painter.viewport(), dynamicBackground);
-        }
-        finalBkgColor = dynamicBackground;
-    }
-    else if(auto color = QColor(mainViewBackground); color.isValid())
-    {
-        painter.fillRect(painter.viewport(), color);
-        finalBkgColor = color;
-    }
-    else
-    {
-        painter.fillRect(painter.viewport(), this->palette().color(QPalette::Window));
-        finalBkgColor = this->palette().color(QPalette::Window);
-    }
+    QColor color;
+    auto a = dynamicBackground;
+    auto b = QColor(mainViewBackground);
+    auto c = this->palette().color(QPalette::Window);
+    color = a.isValid()? a : (b.isValid()?b:c);
+    painter.fillRect(painter.viewport(), color);
+    finalBkgColor = color;
+
     // >>-- 1. calculate background color. ....end...
 
     int width = this->width();
@@ -772,6 +811,9 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
     if(imgCache[cacheKey::leftPageRaw].isNull())
     {
         qDebug() << __PRETTY_FUNCTION__ << __LINE__ << "consumed time(ms): "<<x.elapsed();
+        if(comic->hasPagePixmap(currPage - 1)){
+
+        }
         imgCache[cacheKey::leftPageRaw] = comic->getPagePixmap(currPage - 1);
         qDebug() << __PRETTY_FUNCTION__ << __LINE__ << "consumed time(ms): "<<x.elapsed();
     }

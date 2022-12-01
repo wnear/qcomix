@@ -1,5 +1,6 @@
 
 #include "imagepreloader.h"
+#include <qdebug.h>
 #include "comicsource.h"
 #include "imagecache.h"
 
@@ -74,11 +75,11 @@ void ImagePreloader::preloadPage(int n)
     if(!enabled) return;
     int limit = n + 3;
     for(; n <= limit; n++){
-        if(n < m_comicSource->getPageCount()){
+        if(m_comicSource->isValidPage(n)){
             // if(auto img = ImageCache::cache().getImage({src->getID(), n}); img.isNull())
             // cache check is doing inside comicsource,
             // it's a try-get.
-
+            qDebug() << __PRETTY_FUNCTION__ <<"pn: "<<n;
             m_comicSource->getPagePixmap(n);
         } else {
             break;

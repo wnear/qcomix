@@ -45,6 +45,7 @@ private:
     void maintain();
     int maxCount = 0;
     QVector<imgCacheEntry> storage;
+    imgCacheEntry currentWriting;
     QReadWriteLock mut { QReadWriteLock::Recursive };
 };
 

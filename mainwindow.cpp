@@ -370,6 +370,10 @@ void MainWindow::loadSettings()
 
         if(!filePath.isEmpty() && getOption("rememberPage").toBool() && current > 0)
         {
+            // if current is near end, save;
+            auto total = this->ui->view->comicSource()->getPageCount();
+            if(current > total - 3)
+                current = 1;
             MainWindow::savePositionForFilePath(filePath, current);
         }
 
@@ -542,18 +546,14 @@ int MainWindow::getSavedPositionForFilePath(const QString& id)
             QJsonObject empty;
             QJsonDocument doc;
             doc.setObject(empty);
-            if(!QDir().mkpath(path))
-            {
+            if(!QDir().mkpath(path)) {
                 QMessageBox::critical(nullptr, "Error", "Failed to create the remembered pages file!");
             }
             QFile f(filePath);
-            if(f.open(QFile::WriteOnly))
-            {
+            if(f.open(QFile::WriteOnly)) {
                 f.write(doc.toJson());
                 f.close();
-            }
-            else
-            {
+            } else {
                 QMessageBox::critical(nullptr, "Error", "Failed to create the remembered pages file!");
             }
         }
@@ -818,13 +818,15 @@ void MainWindow::loadComic(const QStringList& files, bool onStartup) {
     assert(files.count() <=1);
     if(files.count()){
         auto openFileName = files[0];
+        qDebug()<< "open from command line: "<<openFileName;
         assert(! openFileName.isEmpty());
         auto comic = ComicCreator::instance()->createComicSource(this, openFileName);
         if(comic){
             this->loadComic(comic);
-            qDebug()<< "open from command line: "<<openFileName;
-            return;
+            qDebug()<<"OK to load.";
         }
+        qDebug()<<"fail to load.";
+        return;
     }
 
     if(onStartup && MainWindow::getOption("openLastViewedOnStartup").toBool() ){
