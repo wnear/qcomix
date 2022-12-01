@@ -21,7 +21,7 @@ private:
     void preloadPage(int n);
     const int count;
     std::atomic_bool stopFlag = false;
-    ComicSource* src = nullptr;
+    ComicSource* m_comicSource = nullptr;
     QMutex waitMutex;
     QMutex workMutex;
     bool enabled = false;

@@ -47,12 +47,19 @@ public:
     virtual ComicSource* previousComic() = 0;
     virtual bool hasNextComic() = 0;
     virtual bool hasPreviousComic() = 0;
+    bool isValidPage(int pageNum) const {
+            return pageNum >= 0 && pageNum < getPageCount();
+    }
+    bool hasPagePixmap(int pageNum) const;
+
     virtual ComicMetadata getComicMetadata() const = 0;
     virtual PageMetadata getPageMetadata(int pageNum) = 0;
     virtual bool ephemeral() const;
     virtual int startAtPage() const;
     virtual void resortFiles() {}
     virtual ~ComicSource() {}
+protected:
+        QString id;
 };
 
 class FileComicSource : public ComicSource
@@ -79,7 +86,7 @@ protected:
     QString signatureMimeStr{};
     QFileInfoList cachedNeighborList;
     QString path;
-    QString id;
+    // QString id;
 };
 
 class ZipComicSource : public FileComicSource
@@ -93,7 +100,6 @@ public:
     virtual ~ZipComicSource();
 
 protected:
-
     QMutex zipM;
     QList<QuaZipFileInfo> m_zipFileInfoList;
     QuaZip* zip = nullptr;
@@ -136,7 +142,7 @@ private:
     QFileInfoList fileInfoList;
     QFileInfoList cachedNeighborList;
     QString path;
-    QString id;
+    // QString id;
     int startPage = 1;
 };
 
@@ -166,7 +172,7 @@ private:
     QJsonDocument doGet(const QString& endpoint, const QMap<QString, QString>& args);
     QNetworkAccessManager* nam = nullptr;
     QVector<PageMetadata> data;
-    QString id;
+    // QString id;
     QString title;
     QStringList dbPaths;
     QStringList filePaths;

@@ -67,6 +67,14 @@ bool isImage(const QString &filename){
     return false;
 }
 
+bool ComicSource::hasPagePixmap(int pageNum) const
+{
+    assert(isValidPage(pageNum));
+    auto cacheKey = QPair{id, pageNum};
+    auto img = ImageCache::cache().getImage(cacheKey);
+    return !img.isNull();
+}
+
 DirectoryComicSource::DirectoryComicSource(const QString& path)
 {
     QFileInfo fInfo(path);
@@ -260,6 +268,7 @@ void DirectoryComicSource::readNeighborList()
 
 ComicSource* createComicSource_inner(const QString& path)
 {
+    ComicSource *result = nullptr;
     if(path.isEmpty())
         return nullptr;
 
@@ -818,4 +827,5 @@ int ComicSource::startAtPage() const
 {
     return -1;
 }
+
 

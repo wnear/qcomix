@@ -198,7 +198,7 @@ private:
     bool stretchSmallImages = false;
     bool hqTransformMode = false;
     bool checkeredBackgroundForTransparency = false;
-    bool doNotShowFirstPageAsDouble = false;
+    bool showFirstPageAsCover = false;
     bool doNotShowWidePageAsDouble = false;
     bool keepTransformationOnPageSwitch = false;
     bool doublePageMode = false;
