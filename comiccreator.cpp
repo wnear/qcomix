@@ -1,4 +1,5 @@
 #include "comiccreator.h"
+#include "mainwindow.h"
 #include <QLabel>
 
 #include <QEventLoop>
@@ -48,6 +49,7 @@ void ComicCreatorDialog::setProgress(int val, int total)
 ComicSource* ComicCreator::createComicSource(QWidget *parent, const QString& path) {
     qDebug()<<__PRETTY_FUNCTION__<<__LINE__;
     auto dlg = new ComicCreatorDialog(parent, QFileInfo(path).fileName());
+
     QTimer taskTimer;  // timer for task.
     QFutureWatcher<ComicSource*> watcher;
     QObject::connect(&watcher, &QFutureWatcher<ComicSource*>::canceled, [&]() {
@@ -69,7 +71,19 @@ ComicSource* ComicCreator::createComicSource(QWidget *parent, const QString& pat
 
     taskTimer.start();
 
-    auto future = QtConcurrent::run(createComicSource_inner, path);
+    // auto future = QtConcurrent::run(createComicSource_inner, path);
+    auto future = QtConcurrent::run([path](){
+                                        ComicSource *comic = createComicSource_inner(path);
+                                        if(comic == nullptr)
+                                            return comic;
+                                        int lastsave = MainWindow::getSavedPositionForFilePath(comic->getID());
+                                        int start = std::max(0, lastsave-2);
+                                        int end = std::min(comic->getPageCount()-1, lastsave + 3);
+                                        for(int i = start; i <= end; i++){
+                                            comic->getPagePixmap(i);
+                                        }
+                                        return comic;
+                                    });
     watcher.setFuture(future);
 
     QObject::connect(dlg, &ComicCreatorDialog::abort, [&]() {

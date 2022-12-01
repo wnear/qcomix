@@ -92,7 +92,7 @@ signals:
     void zoomLevelChanged(int x);
     void windowIconUpdateNeeded(QPixmap);
     void archiveMetadataUpdateNeeded(ComicMetadata);
-    void imageMetadataUpdateNeeded(PageMetadata, PageMetadata);
+    void imageMetadataUpdated(PageMetadata, PageMetadata);
     void currentPageChanged(const QString&, int cur, int total);
     void fitModeChanged(PageViewWidget::FitMode);
     void updateHorizontalScrollBar(int, int, int);
@@ -105,7 +105,13 @@ signals:
 public slots:
     void setHorizontalScrollPosition(int pos);
     void setVerticalScrollPosition(int pos);
-    void goToPage(int page);
+        /*
+    doublePage, control if load the next page.
+     if doublePage ==   1, load.
+                        0, dont load.
+                        -1, calculate by self.
+        */
+    void goToPage(int page, int doublePage = -1);
     void nextPage(bool slideShow = false);
     void previousPage();
     void rotate(int degree);
@@ -147,12 +153,12 @@ private:
     void scrollNext(ScrollSource src);
     void scrollPrev(ScrollSource src);
     bool currentPageIsSinglePageInDoublePageMode();
-    bool isSinglePage(int pagenumber);
+    bool isSinglePageByPageMeta(int pagenumber);
     int getAdaptiveScrollPixels(ScrollDirection d);
     void fitLeftRightImageToSize(int width, int height, int combined_width, int combined_height, double& leftScaledWidth, double& rightScaledWidth, double& leftScaledHeight, double& rightScaledHeight);
     void ensureDisplacementWithinAllowedBounds();
-    void emitImageMetadataChangedSignal();
-    void setCurrentPageInternal(int page);
+    void updateImageMetadata();
+    void setCurrentPage_Internal(int page);
     double calcZoomScaleFactor();
     void emitStatusbarUpdateSignal();
     void resetTransformation(bool force = false);
@@ -188,7 +194,7 @@ private:
     int stepsBeforePageFlip = 0;
     int slideShowSeconds = 1;
     int transparentBackgroundCheckerSize = 10;
-    ComicSource* comic = nullptr;
+    ComicSource* m_comic = nullptr;
     int currPage = 0;
     int fixedSizeWidth = 0;
     int fixedSizeHeight = 0;
@@ -198,12 +204,14 @@ private:
     bool stretchSmallImages = false;
     bool hqTransformMode = false;
     bool checkeredBackgroundForTransparency = false;
-    bool doNotShowFirstPageAsDouble = false;
+    bool showFirstPageAsCover = false;
     bool doNotShowWidePageAsDouble = false;
     bool keepTransformationOnPageSwitch = false;
-    bool doublePageMode = false;
+    bool m_doublePageMode = false;
     bool doublePageModeSingleStep = false;
+    bool m_isDoublePage; // result after all tings considered.
     bool smartScroll = false;
+
     bool currentXWasReset = true;
     bool flipPagesByScrolling = false;
     int scrollsRequiredToFlip = 1;
@@ -218,7 +226,7 @@ private:
     bool slideShowAutoOpenNextComic = false;
     bool mouseCurrentlyOverWidget = false;
     QPoint mousePos;
-    QPixmap getCheckeredBackground(const int width, const int height);
+    QPixmap getCheckeredBackground(const QSize &size);
     QPixmap checkeredBkg;
     enum class cacheKey //in order, invalidating an entry should invalidate all following entries too
     {

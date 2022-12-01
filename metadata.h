@@ -40,7 +40,10 @@ struct PageMetadata
     QString fileType;
     QStringList urls;
     QStringList tags;
+    // store the single-pic and rotate info.
     bool isBigPage = false; //mannually double.
+    int rotate = 0;
+
     int fileSize = 0;
     int width = 0;
     int height = 0;

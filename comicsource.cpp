@@ -67,6 +67,14 @@ bool isImage(const QString &filename){
     return false;
 }
 
+bool ComicSource::hasPagePixmap(int pageNum) const
+{
+    assert(isValidPage(pageNum));
+    auto cacheKey = QPair{id, pageNum};
+    auto img = ImageCache::cache().getImage(cacheKey);
+    return !img.isNull();
+}
+
 DirectoryComicSource::DirectoryComicSource(const QString& path)
 {
     QFileInfo fInfo(path);
@@ -119,7 +127,9 @@ QPixmap DirectoryComicSource::getPagePixmap(int pageNum)
 {
     assert(pageNum >=0 && pageNum < this->getPageCount());
     auto cacheKey = QPair{id, pageNum};
-    if(auto img = ImageCache::cache().getImage(cacheKey); !img.isNull()) return img;
+    if(auto img = ImageCache::cache().getImage(cacheKey); !img.isNull()) {
+        return img;
+    }
 
     QPixmap img(this->fileInfoList[pageNum].absoluteFilePath());
     ImageCache::cache().addImage(cacheKey, img);
@@ -258,8 +268,30 @@ void DirectoryComicSource::readNeighborList()
     }
 }
 
+bool supportMime(const QMimeType& mime)
+{
+    QStringList supported;
+    supported<<"application/zip" <<"application/rar"<<"application/x-mobipocket-ebook";
+    for(auto i: supported){
+        if(mime.inherits(i))
+            return true;
+    }
+    return false;
+}
+
+bool isSupportedComic(const QString& path)
+{ return supportMime(QMimeDatabase{}.mimeTypeForFile(path)); }
+
+bool isSupportedComic(const QUrl &url)
+{ return false; }
+
+bool isSupportedComic(QIODevice *device)
+{ return supportMime(QMimeDatabase{}.mimeTypeForData(device)); }
+
+
 ComicSource* createComicSource_inner(const QString& path)
 {
+    ComicSource *result = nullptr;
     if(path.isEmpty())
         return nullptr;
 
@@ -276,6 +308,7 @@ ComicSource* createComicSource_inner(const QString& path)
         if(fileInfo.isDir()){
             return new DirectoryComicSource(path);
         }
+
 
         QMimeDatabase mimeDb;
         auto mime = mimeDb.mimeTypeForFile(path);
@@ -818,4 +851,5 @@ int ComicSource::startAtPage() const
 {
     return -1;
 }
+
 

@@ -47,20 +47,20 @@ signals:
 private:
     void makeThumbForPage(int page);
     QPixmap createThumb(int page);
-    const int num = 0;
-    const int threadCount = 0;
-    const int cellSizeX = 0;
-    const int cellSizeY = 0;
-    QString thumbLocation;
-    bool cacheOnDisk = false;
-    bool fastScaling = false;
+    const int c_num = 0;
+    const int c_threadCount = 0;
+    const int c_cellSizeX = 0;
+    const int c_cellSizeY = 0;
+    QString m_thumbLocation;
+    bool m_cacheOnDisk = false;
+    bool m_fastScaling = false;
     std::atomic_bool stopFlag = false;
-    ComicSource* src = nullptr;
+    ComicSource* m_comicSource = nullptr;
     QMutex waitMutex;
     QMutex workMutex;
     int checkQueue();
     QWaitCondition waitCondition;
-    QQueue<int> pageNums;
+    QQueue<int> m_PageNums;
     std::atomic_bool exitFlag = false;
 };
 

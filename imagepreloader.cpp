@@ -1,5 +1,6 @@
 
 #include "imagepreloader.h"
+#include <qdebug.h>
 #include "comicsource.h"
 #include "imagecache.h"
 
@@ -13,7 +14,7 @@ void ImagePreloader::preloadPages(ComicSource* src, int currPage)
     this->stopCurrentWork();
     this->waitMutex.lock();
     this->workMutex.lock();
-    this->src = src;
+    this->m_comicSource = src;
     this->pageNums.clear();
     if(src)
     {
@@ -49,7 +50,7 @@ void ImagePreloader::run()
     {
         waitMutex.lock();
 
-        while(!(stopFlag || exitFlag) && src)
+        while(!(stopFlag || exitFlag) && m_comicSource)
         {
             auto page = checkQueue();
             if(page == -1) break;
@@ -58,7 +59,7 @@ void ImagePreloader::run()
 
         waitCondition.wait(&waitMutex);
 
-        while(!(stopFlag || exitFlag) && src)
+        while(!(stopFlag || exitFlag) && m_comicSource)
         {
             auto page = checkQueue();
             if(page == -1) break;
@@ -74,11 +75,11 @@ void ImagePreloader::preloadPage(int n)
     if(!enabled) return;
     int limit = n + 3;
     for(; n <= limit; n++){
-        if(n < src->getPageCount()){
+        if(m_comicSource->isValidPage(n)){
             // if(auto img = ImageCache::cache().getImage({src->getID(), n}); img.isNull())
             // cache check is doing inside comicsource,
             // it's a try-get.
-            src->getPagePixmap(n);
+            m_comicSource->getPagePixmap(n);
         } else {
             break;
         }

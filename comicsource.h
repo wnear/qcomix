@@ -27,6 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QHash>
 #include <quazipfileinfo.h>
 #include <mobi.h>
+#include <QMimeType>
 
 class QuaZip;
 class QuaZipFile;
@@ -47,12 +48,20 @@ public:
     virtual ComicSource* previousComic() = 0;
     virtual bool hasNextComic() = 0;
     virtual bool hasPreviousComic() = 0;
+    bool isValidPage(int pageNum) const {
+            return pageNum >= 0 && pageNum < getPageCount();
+    }
+    bool hasPagePixmap(int pageNum) const;
+
     virtual ComicMetadata getComicMetadata() const = 0;
     virtual PageMetadata getPageMetadata(int pageNum) = 0;
+    virtual void setPageMetadata(int pageNum, PageMetadata) {}
     virtual bool ephemeral() const;
     virtual int startAtPage() const;
     virtual void resortFiles() {}
     virtual ~ComicSource() {}
+protected:
+    QString id;
 };
 
 class FileComicSource : public ComicSource
@@ -79,7 +88,7 @@ protected:
     QString signatureMimeStr{};
     QFileInfoList cachedNeighborList;
     QString path;
-    QString id;
+    // QString id;
 };
 
 class ZipComicSource : public FileComicSource
@@ -93,7 +102,6 @@ public:
     virtual ~ZipComicSource();
 
 protected:
-
     QMutex zipM;
     QList<QuaZipFileInfo> m_zipFileInfoList;
     QuaZip* zip = nullptr;
@@ -136,7 +144,7 @@ private:
     QFileInfoList fileInfoList;
     QFileInfoList cachedNeighborList;
     QString path;
-    QString id;
+    // QString id;
     int startPage = 1;
 };
 
@@ -166,11 +174,16 @@ private:
     QJsonDocument doGet(const QString& endpoint, const QMap<QString, QString>& args);
     QNetworkAccessManager* nam = nullptr;
     QVector<PageMetadata> data;
-    QString id;
+    // QString id;
     QString title;
     QStringList dbPaths;
     QStringList filePaths;
 };
+
+bool supportMime(const QMimeType& mimestr);
+bool isSupportedComic(const QString& path);
+bool isSupportedComic(const QUrl &url);
+bool isSupportedComic(QIODevice *device);
 
 ComicSource* createComicSource_inner(const QString &path);
 ComicSource* createComicSource_fn(const QString& path);
