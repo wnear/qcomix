@@ -27,6 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QHash>
 #include <quazipfileinfo.h>
 #include <mobi.h>
+#include <QMimeType>
 
 class QuaZip;
 class QuaZipFile;
@@ -177,6 +178,11 @@ private:
     QStringList dbPaths;
     QStringList filePaths;
 };
+
+bool supportMime(const QMimeType& mimestr);
+bool isSupportedComic(const QString& path);
+bool isSupportedComic(const QUrl &url);
+bool isSupportedComic(QIODevice *device);
 
 ComicSource* createComicSource_inner(const QString &path);
 ComicSource* createComicSource_fn(const QString& path);

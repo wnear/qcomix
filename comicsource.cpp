@@ -268,6 +268,27 @@ void DirectoryComicSource::readNeighborList()
     }
 }
 
+bool supportMime(const QMimeType& mime)
+{
+    QStringList supported;
+    supported<<"application/zip" <<"application/rar"<<"application/x-mobipocket-ebook";
+    for(auto i: supported){
+        if(mime.inherits(i))
+            return true;
+    }
+    return false;
+}
+
+bool isSupportedComic(const QString& path)
+{ return supportMime(QMimeDatabase{}.mimeTypeForFile(path)); }
+
+bool isSupportedComic(const QUrl &url)
+{ return false; }
+
+bool isSupportedComic(QIODevice *device)
+{ return supportMime(QMimeDatabase{}.mimeTypeForData(device)); }
+
+
 ComicSource* createComicSource_inner(const QString& path)
 {
     ComicSource *result = nullptr;
@@ -287,6 +308,7 @@ ComicSource* createComicSource_inner(const QString& path)
         if(fileInfo.isDir()){
             return new DirectoryComicSource(path);
         }
+
 
         QMimeDatabase mimeDb;
         auto mime = mimeDb.mimeTypeForFile(path);
