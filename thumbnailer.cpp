@@ -22,16 +22,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "imagepreloader.h"
 #include <QDir>
 #include <QStandardPaths>
+#include <QMutexLocker>
 
 Thumbnailer::Thumbnailer(int num, int threadCount, int cellSizeX, int cellSizeY, bool cacheOnDisk, bool fastScaling, QObject* parent) :
-    QThread{parent}, num(num), threadCount(threadCount), cellSizeX(cellSizeX), cellSizeY(cellSizeY), cacheOnDisk(cacheOnDisk), fastScaling(fastScaling)
+    QThread{parent}, c_num(num), c_threadCount(threadCount), c_cellSizeX(cellSizeX), c_cellSizeY(cellSizeY), m_cacheOnDisk(cacheOnDisk), m_fastScaling(fastScaling)
 {
-    if(cacheOnDisk)
-    {
-        thumbLocation = QStandardPaths::standardLocations(QStandardPaths::CacheLocation).first() + "/qcomix/";
-        if(!QFile::exists(thumbLocation))
-        {
-            QDir{}.mkpath(thumbLocation);
+    if(cacheOnDisk) {
+        m_thumbLocation = QStandardPaths::standardLocations(QStandardPaths::CacheLocation).first() + "/qcomix/";
+        if(!QFile::exists(m_thumbLocation)) {
+            QDir{}.mkpath(m_thumbLocation);
         }
     }
 }
@@ -39,10 +38,11 @@ Thumbnailer::Thumbnailer(int num, int threadCount, int cellSizeX, int cellSizeY,
 void Thumbnailer::stopCurrentWork()
 {
     this->stopFlag = true;
-    this->waitMutex.lock();
-    this->pageNums.clear();
+
+    QMutexLocker lock(&waitMutex);
+
+    this->m_PageNums.clear();
     this->waitCondition.wakeAll();
-    this->waitMutex.unlock();
 }
 
 void Thumbnailer::exit()
@@ -53,55 +53,60 @@ void Thumbnailer::exit()
 
 void Thumbnailer::startWorking(ComicSource* src)
 {
+    if(!src)
+        return;
+
     this->stopCurrentWork();
-    this->waitMutex.lock();
-    this->src = src;
-    if(src)
-        for(int i = num; i < src->getPageCount(); i += threadCount) pageNums.enqueue(i);
+    QMutexLocker lock(&waitMutex);
+    this->m_comicSource = src;
+    //TODO:
+    // auto start = std::min(src->getPageCount(), 20);
+    auto start = src->getPageCount();
+    for(int i = c_num; i < start; i += c_threadCount)
+        m_PageNums.enqueue(i);
     this->stopFlag = false;
     this->waitCondition.wakeAll();
-    this->waitMutex.unlock();
 }
 
 void Thumbnailer::makeThumbForPage(int page)
 {
-    if(src)
+    if(!m_comicSource)
+        return;
+
+    auto srcID = m_comicSource->getID();
+    auto cacheKey = QPair{srcID, page};
+    if(!ThumbCache::cache().hasKey(cacheKey))
     {
-        auto srcID = src->getID();
-        auto cacheKey = QPair{srcID, page};
-        if(!ThumbCache::cache().hasKey(cacheKey))
+        if(m_cacheOnDisk)
         {
-            if(cacheOnDisk)
+            QString fname = "qc_thumb_" + srcID + "_" + QString::number(page) + "_" + QString::number(c_cellSizeX) + "_" + QString::number(c_cellSizeY) + ".png";
+            if(QFile::exists(m_thumbLocation + "/" + fname))
             {
-                QString fname = "qc_thumb_" + srcID + "_" + QString::number(page) + "_" + QString::number(cellSizeX) + "_" + QString::number(cellSizeY) + ".png";
-                if(QFile::exists(thumbLocation + "/" + fname))
+                auto thumbFromDisk = QPixmap(m_thumbLocation + "/" + fname);
+                if(!thumbFromDisk.isNull())
                 {
-                    auto thumbFromDisk = QPixmap(thumbLocation + "/" + fname);
-                    if(!thumbFromDisk.isNull())
-                    {
-                        ThumbCache::cache().addImage(cacheKey, thumbFromDisk);
-                    }
-                    else
-                    {
-                        QPixmap thumb = createThumb(page);
-                        ThumbCache::cache().addImage(cacheKey, thumb);
-                    }
-                    emit this->thumbnailReady(srcID, page);
+                    ThumbCache::cache().addImage(cacheKey, thumbFromDisk);
                 }
                 else
                 {
                     QPixmap thumb = createThumb(page);
                     ThumbCache::cache().addImage(cacheKey, thumb);
-                    emit this->thumbnailReady(srcID, page);
-                    if(!src->ephemeral()) thumb.save(thumbLocation + "/" + fname, "PNG");
                 }
+                emit this->thumbnailReady(srcID, page);
             }
             else
             {
                 QPixmap thumb = createThumb(page);
                 ThumbCache::cache().addImage(cacheKey, thumb);
                 emit this->thumbnailReady(srcID, page);
+                if(!m_comicSource->ephemeral()) thumb.save(m_thumbLocation + "/" + fname, "PNG");
             }
+        }
+        else
+        {
+            QPixmap thumb = createThumb(page);
+            ThumbCache::cache().addImage(cacheKey, thumb);
+            emit this->thumbnailReady(srcID, page);
         }
     }
 }
@@ -112,7 +117,7 @@ void Thumbnailer::run()
     {
         waitMutex.lock();
 
-        while(!(stopFlag || exitFlag) && src)
+        while(!(stopFlag || exitFlag) && m_comicSource)
         {
             auto page = checkQueue();
             if(page == -1) break;
@@ -121,7 +126,7 @@ void Thumbnailer::run()
 
         waitCondition.wait(&waitMutex);
 
-        while(!(stopFlag || exitFlag) && src)
+        while(!(stopFlag || exitFlag) && m_comicSource)
         {
             auto page = checkQueue();
             if(page == -1) break;
@@ -135,35 +140,34 @@ void Thumbnailer::run()
 void Thumbnailer::refocus(int pageNum)
 {
     pageNum--;
-    workMutex.lock();
-    int c = pageNums.size();
+    QMutexLocker lock(&workMutex);
+    int c = m_PageNums.size();
     while(c > 0)
     {
         c--;
-        auto it = pageNums.head();
+        auto it = m_PageNums.head();
         if(it > pageNum - 8 && it <= pageNum)
         {
             break;
         }
         else
         {
-            pageNums.dequeue();
-            pageNums.enqueue(it);
+            m_PageNums.dequeue();
+            m_PageNums.enqueue(it);
         }
     }
-    workMutex.unlock();
 }
 
 QPixmap Thumbnailer::createThumb(int page)
 {
-    return src->getPagePixmap(page).scaled(cellSizeX, cellSizeY, Qt::KeepAspectRatio, fastScaling ? Qt::FastTransformation : Qt::SmoothTransformation);
+    return m_comicSource->getPagePixmap(page).scaled(c_cellSizeX, c_cellSizeY, Qt::KeepAspectRatio, m_fastScaling ? Qt::FastTransformation : Qt::SmoothTransformation);
 }
 
 int Thumbnailer::checkQueue()
 {
     int page = -1;
-    workMutex.lock();
-    if(!pageNums.isEmpty()) page = pageNums.dequeue();
-    workMutex.unlock();
+    QMutexLocker lock(&workMutex);
+    if(!m_PageNums.isEmpty())
+        page = m_PageNums.dequeue();
     return page;
 }

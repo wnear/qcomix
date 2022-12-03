@@ -127,7 +127,9 @@ QPixmap DirectoryComicSource::getPagePixmap(int pageNum)
 {
     assert(pageNum >=0 && pageNum < this->getPageCount());
     auto cacheKey = QPair{id, pageNum};
-    if(auto img = ImageCache::cache().getImage(cacheKey); !img.isNull()) return img;
+    if(auto img = ImageCache::cache().getImage(cacheKey); !img.isNull()) {
+        return img;
+    }
 
     QPixmap img(this->fileInfoList[pageNum].absoluteFilePath());
     ImageCache::cache().addImage(cacheKey, img);

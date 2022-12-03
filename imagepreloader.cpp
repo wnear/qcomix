@@ -79,7 +79,6 @@ void ImagePreloader::preloadPage(int n)
             // if(auto img = ImageCache::cache().getImage({src->getID(), n}); img.isNull())
             // cache check is doing inside comicsource,
             // it's a try-get.
-            qDebug() << __PRETTY_FUNCTION__ <<"pn: "<<n;
             m_comicSource->getPagePixmap(n);
         } else {
             break;
