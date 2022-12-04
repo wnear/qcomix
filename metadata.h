@@ -41,6 +41,7 @@ struct PageMetadata
     QStringList urls;
     QStringList tags;
     bool isBigPage = false; //mannually double.
+    int rotate = 0;
     int fileSize = 0;
     int width = 0;
     int height = 0;

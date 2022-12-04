@@ -126,7 +126,7 @@ void PageViewWidget::initialize(ThumbnailWidget* w)
     doNotShowWidePageAsDouble = MainWindow::getOption("doNotShowWidePageAsDouble").toBool();
     checkeredBackgroundForTransparency = MainWindow::getOption("checkeredBackgroundForTransparency").toBool();
     keepTransformationOnPageSwitch = MainWindow::getOption("keepTransformationOnPageSwitch").toBool();
-    keepTransformationOnPageSwitch = true;
+    keepTransformationOnPageSwitch = false;
     mangaMode = MainWindow::getOption("mangaMode").toBool();
     slideShowSeconds = MainWindow::getOption("slideShowInterval").toInt();
     slideShowAutoOpenNextComic = MainWindow::getOption("slideShowAutoOpenNextComic").toBool();
@@ -233,13 +233,34 @@ void PageViewWidget::resetZoom()
     emitStatusbarUpdateSignal();
 }
 
-void PageViewWidget::goToPage(int page)
+void PageViewWidget::goToPage(int page, int doublePage)
 {
     if(m_comic == nullptr || page == currPage )
         return;
 
     if(!m_comic->isValidPage(page-1))
         return;
+    if(doublePage == -1){
+        m_isDoublePage = false;
+        do {
+            if(!isDoublePageMode())
+                break ;
+            // if(doublePageModeSingleStep)
+            //     break;
+
+            int pn_a = page-1;
+            int pn_b = pn_a+1;
+            if(isSinglePageByPageMeta(pn_a))
+                break;
+            if(!m_comic->isValidPage(pn_b))
+                break;
+            if(isSinglePageByPageMeta(pn_b))
+                break;
+            m_isDoublePage = true;
+        } while(0);
+    } else {
+        m_isDoublePage = doublePage == 1? true:false;
+    }
 
     this->setCurrentPage_Internal(page);
     resetTransformation();
@@ -262,17 +283,17 @@ void PageViewWidget::firstPage()
 void PageViewWidget::nextPage(bool slideShow)
 {
     //TODO:
-    bool isEnd = (m_isDoublePage && currPage >= this->m_comic->getPageCount()-0)
-                ||(!m_isDoublePage && currPage >= this->m_comic->getPageCount()-1);
+    bool isEnd = ( m_isDoublePage && currPage >= this->m_comic->getPageCount()-0)
+               ||(!m_isDoublePage && currPage >= this->m_comic->getPageCount()-1);
     if(isEnd){
         emit requestLoadNextComic();
-        //emit requestNextComic();
         return;
     }
     if(this->doublePageModeSingleStep){
         this->goToPage(currPage+1);
     } else
-        this->goToPage(m_isDoublePage&&!this->doublePageModeSingleStep? currPage +2 : currPage +1);
+        this->goToPage(m_isDoublePage&&!this->doublePageModeSingleStep
+                       ? currPage +2 : currPage +1);
 }
 
 void PageViewWidget::toggleSlideShow(bool enabled)
@@ -303,19 +324,28 @@ void PageViewWidget::previousPage()
     if(! m_comic->isValidPage(page))
         return;
     do {
-        if(isSinglePageByPageMeta(page))
+        m_isDoublePage = false;
+        if(m_doublePageMode == false)
             break;
-        if(this->doublePageModeSingleStep)
+        if(isSinglePageByPageMeta(page-1)){
             break;
+        }
+        // if(this->doublePageModeSingleStep)
+        //     break;
 
         int secondPage = page-1;
-        if(isSinglePageByPageMeta(secondPage))
+        if(isSinglePageByPageMeta(secondPage-1))
             break;
         if(secondPage == 0 && showFirstPageAsCover)
             break;
         page = secondPage;
+        m_isDoublePage = true;
     } while(0);
-    this->goToPage(page);
+
+    if(doublePageModeSingleStep){
+        this->goToPage(currPage - 1);
+    } else
+        this->goToPage(page, m_isDoublePage?1:0);
 }
 
 void PageViewWidget::setFitMode(FitMode mode)
@@ -400,7 +430,7 @@ void PageViewWidget::setMangaMode(bool enabled)
 {
     this->mangaMode = enabled;
     emit this->pageViewConfigUINeedsToBeUpdated();
-    this->imageMetadataChanged();
+    this->updateImageMetadata();
     maintainCache(cacheKey::leftPageRaw);
 }
 
@@ -705,10 +735,6 @@ void PageViewWidget::fitLeftRightImageToSize(int width, int height, int combined
     }
 }
 
-bool isSinglePage(int pageNum){
-    return true;
-}
-
 struct ImageInfo {
     QPixmap image;
     QPixmap imageScreen;
@@ -760,8 +786,7 @@ void preparePageBeforeUpdate_getpage(void){
 void PageViewWidget::paintEvent(QPaintEvent* event)
 {
     //check comicsource
-    qDebug()<<__PRETTY_FUNCTION__<<__LINE__;
-    if(this->m_comic == nullptr || !m_comic->isValidPage(this->currPage))
+    if(this->m_comic == nullptr || !m_comic->isValidPage(this->currPage - 1))
         return;
     //check this
     if(active == false){
@@ -790,29 +815,18 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
     int targetY = 0;
 
     // -- 2. get imgCache[pageRaw] data.
-    if(imgCache[cacheKey::leftPageRaw].isNull())
-    {
-        if(m_comic->hasPagePixmap(currPage - 1)){
-
-        }
+    if(imgCache[cacheKey::leftPageRaw].isNull()) {
         imgCache[cacheKey::leftPageRaw] = m_comic->getPagePixmap(currPage - 1);
     }
 
-    bool doublePage = m_doublePageMode &&
-                        currPage < m_comic->getPageCount() &&
-                        !(currPage == 1 && showFirstPageAsCover) &&
-                        !(imgCache[cacheKey::leftPageRaw].width() > imgCache[cacheKey::leftPageRaw].height() && doNotShowWidePageAsDouble);
-    m_isDoublePage = doublePage;
-    if(doublePage)
+    bool doublePage = m_isDoublePage;
+    if(doublePage && imgCache[cacheKey::rightPageRaw].isNull())
     {
-        if(imgCache[cacheKey::rightPageRaw].isNull())
-        {
-            imgCache[cacheKey::rightPageRaw] = m_comic->getPagePixmap(currPage);
+        imgCache[cacheKey::rightPageRaw] = m_comic->getPagePixmap(currPage);
 
-            if(mangaMode)
-            {
-                imgCache[cacheKey::rightPageRaw].swap(imgCache[cacheKey::leftPageRaw]);
-            }
+        if(mangaMode)
+        {
+            imgCache[cacheKey::rightPageRaw].swap(imgCache[cacheKey::leftPageRaw]);
         }
     }
 
@@ -1206,8 +1220,8 @@ void PageViewWidget::wheelEvent(QWheelEvent* event)
 
 void PageViewWidget::keyPressEvent(QKeyEvent* event)
 {
-    bool m_forceSingleByPressShift =!! (event->modifiers()&Qt::ShiftModifier);
-    if(m_forceSingleByPressShift) { this->doublePageModeSingleStep = true; }
+    bool forceSingleByPressShift =!! (event->modifiers()&Qt::ShiftModifier);
+    if(forceSingleByPressShift) { this->doublePageModeSingleStep = true; }
     if(event->key() == Qt::Key_Up)
     {
         scrollPrev(ScrollSource::ArrowKeyScroll);
@@ -1521,8 +1535,13 @@ bool PageViewWidget::isSinglePageByPageMeta(int pn)
     // currPage pageNum start from 1.
     // while comicSource pageNum start from 0.
 
+    //first page.
     if(pn == 0 && showFirstPageAsCover)
         return true;
+
+    //last page.
+    // if(pn == m_comic->getPageCount() -1)
+    //     return true;
 
     //criteria
     auto meta = m_comic->getPageMetadata(pn);
@@ -1530,12 +1549,26 @@ bool PageViewWidget::isSinglePageByPageMeta(int pn)
     //isbanner
     if( (w>h && w/h>2) || (w<h) && (h/w>2) )
         return true;
+
     /*
     criteria
     - witdth: set the width val.
     - ratio, set the ratio.
     - auto, will record the first few page, record the data, calculate the ratio or width.
     */
+
+    //auto
+    auto pagesquare = [](PageMetadata x){
+        return x.width * x.height;
+    };
+    if(m_comic->isValidPage(pn-1) && m_comic->isValidPage(pn+1)){
+        auto page_former = pagesquare(m_comic->getPageMetadata(pn-1));
+        auto page_cur = pagesquare(m_comic->getPageMetadata(pn));
+        auto page_latter = pagesquare(m_comic->getPageMetadata(pn+1));
+        if(page_cur > page_former*1.3 && page_cur > page_latter * 1.3){
+            return true;
+        }
+    }
 
     // criteria is width value.
     // if(w > 1000)
@@ -1588,50 +1621,36 @@ void PageViewWidget::ensureDisplacementWithinAllowedBounds()
     }
 }
 
-void PageViewWidget::imageMetadataChanged()
+void PageViewWidget::updateImageMetadata()
 {
     auto metadata1 = PageMetadata{};
     auto metadata2 = PageMetadata{};
     if(m_comic && m_comic->getPageCount() > 0 && currPage > 0)
     {
         metadata1 = m_comic->getPageMetadata(currPage - 1);
-        if(m_doublePageMode && currPage < m_comic->getPageCount())
-        {
-            if(!currentPageIsSinglePageInDoublePageMode())
-                metadata2 = m_comic->getPageMetadata(currPage);
+        if(m_isDoublePage){
+            metadata2 = m_comic->getPageMetadata(currPage);
         }
     }
     if(metadata2.valid && mangaMode)
     {
-        emit this->imageMetadataUpdateNeeded(metadata2, metadata1);
+        std::swap(metadata2, metadata1);
     }
-    else
-    {
-        emit this->imageMetadataUpdateNeeded(metadata1, metadata2);
-    }
+    emit this->imageMetadataUpdated(metadata1, metadata2);
     emitStatusbarUpdateSignal();
 }
 
-void PageViewWidget::setCurrentPage_Internal(int page, int doublePage)
+void PageViewWidget::setCurrentPage_Internal(int page)
 {
-    if(currPage != page)
-    {
-        maintainCache(cacheKey::leftPageRaw);
-    }
+    maintainCache(cacheKey::leftPageRaw);
     currPage = page;
-    if(m_comic)
-    {
-        emit this->currentPageChanged(m_comic->getFilePath(), currPage, m_comic->getPageCount());
-    }
-    else
-    {
-        emit this->currentPageChanged({}, 0, 0);
-    }
+    emit this->currentPageChanged(m_comic->getFilePath(), currPage, m_comic->getPageCount());
     update();
-    qDebug()<<__PRETTY_FUNCTION__<<__LINE__<<"current page num:"<<currPage;
+
     updtWindowIcon = true;
-    if(this->thumbsWidget) this->thumbsWidget->setCurrentPage(page);
-    this->imageMetadataChanged();
+    if(this->thumbsWidget)
+        this->thumbsWidget->setCurrentPage(page);
+    this->updateImageMetadata();
     emit this->pageViewConfigUINeedsToBeUpdated();
 }
 

@@ -92,7 +92,7 @@ signals:
     void zoomLevelChanged(int x);
     void windowIconUpdateNeeded(QPixmap);
     void archiveMetadataUpdateNeeded(ComicMetadata);
-    void imageMetadataUpdateNeeded(PageMetadata, PageMetadata);
+    void imageMetadataUpdated(PageMetadata, PageMetadata);
     void currentPageChanged(const QString&, int cur, int total);
     void fitModeChanged(PageViewWidget::FitMode);
     void updateHorizontalScrollBar(int, int, int);
@@ -105,7 +105,13 @@ signals:
 public slots:
     void setHorizontalScrollPosition(int pos);
     void setVerticalScrollPosition(int pos);
-    void goToPage(int page);
+        /*
+    doublePage, control if load the next page.
+     if doublePage ==   1, load.
+                        0, dont load.
+                        -1, calculate by self.
+        */
+    void goToPage(int page, int doublePage = -1);
     void nextPage(bool slideShow = false);
     void previousPage();
     void rotate(int degree);
@@ -151,14 +157,8 @@ private:
     int getAdaptiveScrollPixels(ScrollDirection d);
     void fitLeftRightImageToSize(int width, int height, int combined_width, int combined_height, double& leftScaledWidth, double& rightScaledWidth, double& leftScaledHeight, double& rightScaledHeight);
     void ensureDisplacementWithinAllowedBounds();
-    void imageMetadataChanged();
-        /*
-    doublePage, control if load the next page.
-     if doublePage ==   1, load.
-                        0, dont load.
-                        -1, calculate by self.
-        */
-    void setCurrentPage_Internal(int page, int doublePage = -1);
+    void updateImageMetadata();
+    void setCurrentPage_Internal(int page);
     double calcZoomScaleFactor();
     void emitStatusbarUpdateSignal();
     void resetTransformation(bool force = false);

@@ -390,7 +390,7 @@ void MainWindow::loadSettings()
     });
     connect(this->ui->view, &PageViewWidget::requestLoadNextComic, this, &MainWindow::on_actionNext_comic_triggered);
     connect(this->ui->view, &PageViewWidget::requestLoadPrevComic, this, &MainWindow::on_actionPrevious_comic_triggered);
-    connect(this->ui->view, &PageViewWidget::imageMetadataUpdateNeeded, [this](const PageMetadata& m1, const PageMetadata& m2) {
+    connect(this->ui->view, &PageViewWidget::imageMetadataUpdated, [this](const PageMetadata& m1, const PageMetadata& m2) {
         this->ui->labelim1v2->setVisible(m1.valid);
         this->ui->labelim1v3->setVisible(m1.valid);
         this->ui->labelim1v4->setVisible(m1.valid);
@@ -491,7 +491,7 @@ void MainWindow::loadSettings()
                 }
             });
 
-    connect(this->ui->thumbnails, &ThumbnailWidget::pageChangeRequested, this->ui->view, &PageViewWidget::goToPage);
+    connect(this->ui->thumbnails, &ThumbnailWidget::pageChangeRequested, [this](int page){this->ui->view->goToPage(page);});
     connect(this->ui->thumbnails, &ThumbnailWidget::nextPageRequested, [&]() { this->ui->view->nextPage(); });
     connect(this->ui->thumbnails, &ThumbnailWidget::prevPageRequested, this->ui->view, &PageViewWidget::previousPage);
     connect(this->ui->thumbnails, &ThumbnailWidget::prevPageRequested, this, [](){ });
@@ -944,7 +944,10 @@ void MainWindow::stopThreads()
 
 void MainWindow::updateWindowTitle()
 {
-    QString title;
+    QString title{};
+    QString pagePart{};
+    QString playlistPart{};
+    QString comicTitle = nameInWindowTitle;
     if(currentPageInWindowTitle != 0 && maxPageInWindowTitle != 0 && MainWindow::getOption("useComicNameAsWindowTitle").toBool())
     {
         title = QString("[%1/%2] ").arg(QString::number(currentPageInWindowTitle), QString::number(maxPageInWindowTitle));
