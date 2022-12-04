@@ -190,6 +190,7 @@ private:
     QString statusbarFitMode;
     PageMetadata statusbarPageMetadata;
     PageMetadata statusbarPageMetadata2;
+    QStringList m_openFileList;
 };
 
 class BookmarksTreeWidgetEventFilter : public QObject

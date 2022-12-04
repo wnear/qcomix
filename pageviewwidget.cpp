@@ -235,11 +235,14 @@ void PageViewWidget::resetZoom()
 
 void PageViewWidget::goToPage(int page)
 {
-    if(m_comic && page != currPage && page > 0 && page < m_comic->getPageCount() + 1)
-    {
-        this->setCurrentPage_Internal(page);
-        resetTransformation();
-    }
+    if(m_comic == nullptr || page == currPage )
+        return;
+
+    if(!m_comic->isValidPage(page-1))
+        return;
+
+    this->setCurrentPage_Internal(page);
+    resetTransformation();
     emit this->pageViewConfigUINeedsToBeUpdated();
 }
 
@@ -259,11 +262,12 @@ void PageViewWidget::firstPage()
 void PageViewWidget::nextPage(bool slideShow)
 {
     //TODO:
-    bool isEnd = (m_isDoublePage && currPage >= this->m_comic->getPageCount()-1)
-                ||(!m_isDoublePage && currPage >= this->m_comic->getPageCount()-2);
+    bool isEnd = (m_isDoublePage && currPage >= this->m_comic->getPageCount()-0)
+                ||(!m_isDoublePage && currPage >= this->m_comic->getPageCount()-1);
     if(isEnd){
+        emit requestLoadNextComic();
         //emit requestNextComic();
-        // return;
+        return;
     }
     if(this->doublePageModeSingleStep){
         this->goToPage(currPage+1);
@@ -290,6 +294,10 @@ void PageViewWidget::previousPage()
 {
     //TODO:
     //isStart page ,request for previous comic.
+    if(currPage <=1){
+        emit requestLoadPrevComic();
+        return;
+    }
     // bool isStart = ;
     int page = currPage -1;
     if(! m_comic->isValidPage(page))
@@ -392,7 +400,7 @@ void PageViewWidget::setMangaMode(bool enabled)
 {
     this->mangaMode = enabled;
     emit this->pageViewConfigUINeedsToBeUpdated();
-    this->emitImageMetadataChangedSignal();
+    this->imageMetadataChanged();
     maintainCache(cacheKey::leftPageRaw);
 }
 
@@ -444,45 +452,33 @@ ComicSource* PageViewWidget::setComicSource(ComicSource* src)
     auto oldComic = m_comic;
 
     m_comic = src;
+    emit this->archiveMetadataUpdateNeeded(m_comic? m_comic->getComicMetadata():ComicMetadata{});
 
     maintainCache(cacheKey::dropAll);
 
-    if(this->thumbsWidget) this->thumbsWidget->setComicSource(src);
-
-    this->setCurrentPage_Internal(0);
+    if(this->thumbsWidget)
+        this->thumbsWidget->setComicSource(src);
 
     if(m_comic)
     {
-        auto startAtPage = m_comic->startAtPage();
-        if(startAtPage == -1)
+        auto startPageNum = m_comic->startAtPage();
+        if(startPageNum == -1)
         {
             if(MainWindow::getOption("rememberPage").toBool())
             {
                 auto savedPos = MainWindow::getSavedPositionForFilePath(m_comic->getFilePath());
-                if(savedPos <= m_comic->getPageCount() && savedPos > 0)
+                if(m_comic->isValidPage(savedPos - 1))
                 {
-                    this->setCurrentPage_Internal(savedPos);
+                    startPageNum = savedPos;
                 }
             }
             else if(m_comic->getPageCount() > 0)
             {
-                this->setCurrentPage_Internal(1);
+                startPageNum = 1;
             }
-        } else
-        {
-            this->setCurrentPage_Internal(startAtPage);
         }
-
-        emit this->archiveMetadataUpdateNeeded(m_comic->getComicMetadata());
+        this->goToPage(startPageNum);
     }
-    else
-    {
-        emit this->archiveMetadataUpdateNeeded(ComicMetadata{});
-    }
-
-    resetTransformation();
-
-    emit this->pageViewConfigUINeedsToBeUpdated();
 
     return oldComic;
 }
@@ -1592,7 +1588,7 @@ void PageViewWidget::ensureDisplacementWithinAllowedBounds()
     }
 }
 
-void PageViewWidget::emitImageMetadataChangedSignal()
+void PageViewWidget::imageMetadataChanged()
 {
     auto metadata1 = PageMetadata{};
     auto metadata2 = PageMetadata{};
@@ -1635,7 +1631,7 @@ void PageViewWidget::setCurrentPage_Internal(int page, int doublePage)
     qDebug()<<__PRETTY_FUNCTION__<<__LINE__<<"current page num:"<<currPage;
     updtWindowIcon = true;
     if(this->thumbsWidget) this->thumbsWidget->setCurrentPage(page);
-    this->emitImageMetadataChangedSignal();
+    this->imageMetadataChanged();
     emit this->pageViewConfigUINeedsToBeUpdated();
 }
 

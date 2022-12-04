@@ -531,7 +531,27 @@ void MainWindow::loadSettings()
 
 void MainWindow::init_openFiles(const QStringList &files)
 {
-    this->loadComic(files, true);
+    m_openFileList.clear() ;
+    QStringList imgs;
+    QStringList comics;
+
+    for(auto i: files){
+        QString path = QFileInfo(i).absoluteFilePath();
+        if(isImage(path)){
+            imgs.push_back(path);
+        } else if(isSupportedComic(path)){
+            comics.push_back(path);
+        } else {
+            continue;
+        }
+    }
+    if (imgs.count()){
+        //creat One comic with filelist of imags.
+        // comics.push_back();
+    }
+    m_openFileList = comics;
+
+    this->loadComic(comics, true);
 }
 
 int MainWindow::getSavedPositionForFilePath(const QString& id)
@@ -815,19 +835,20 @@ void MainWindow::loadComic(const QStringList& files, bool onStartup) {
     //TODO:
     //set playlist. and open the first book.
     //
-    assert(files.count() <=1);
+    // assert(files.count() <=1);
     if(files.count()){
         auto openFileName = files[0];
-        qDebug()<< "open from command line: "<<openFileName;
-        assert(! openFileName.isEmpty());
         auto comic = ComicCreator::instance()->createComicSource(this, openFileName);
         if(comic){
             this->loadComic(comic);
-            qDebug()<<"OK to load.";
         }
-        qDebug()<<"fail to load.";
+        if(m_openFileList.count() == 1){
+            //if autoadd.
+
+        }
         return;
     }
+
 
     if(onStartup && MainWindow::getOption("openLastViewedOnStartup").toBool() ){
         auto filename = readLastViewedFilePath();
@@ -846,6 +867,9 @@ void MainWindow::loadComic(ComicSource* comic)
     nameInWindowTitle.clear();
     currentPageInWindowTitle = 0;
     maxPageInWindowTitle = 0;
+    // if(m_openFileList.isEmpty()){
+    //     // m_openFileList = comic;
+    // }
 
     if(comic && comic->getPageCount())
     {
@@ -876,19 +900,6 @@ void MainWindow::loadComic(ComicSource* comic)
         this->saveLastViewedFilePath(comic->getFilePath());
         this->addToRecentFiles(comic->getFilePath());
     } else {
-        // nameInWindowTitle = "qcomix";
-        // setWindowIcon(QIcon(":/icon.png"));
-        // statusbarFilepath.clear();
-        // statusbarTitle.clear();
-        // statusbarCurrPage = 0;
-        // statusbarPageCnt = 0;
-
-        // const QModelIndex rootIndex = fileSystemModel.index("");
-        // this->ui->fileSystemView->setCurrentIndex(fileSystemFilterModel.mapFromSource(rootIndex));
-        // this->ui->fileSystemView->setExpanded(fileSystemFilterModel.mapFromSource(rootIndex), true);
-        // this->ui->fileSystemView->scrollTo(fileSystemFilterModel.mapFromSource(rootIndex));
-
-        // this->saveLastViewedFilePath({});
     }
 
     this->rebuildOpenWithMenu(comic);
@@ -1539,6 +1550,7 @@ void MainWindow::on_actionOpen_triggered()
 {
     auto res = QFileDialog::getOpenFileName(
       this, QString{}, QString{}, "Zip archives (*.zip *.cbz);;Any file (*.*)");
+    m_openFileList.clear();
     if(!res.isEmpty()) this->loadComic(createComicSource(this, res));
 }
 
@@ -1587,6 +1599,17 @@ void MainWindow::on_actionNext_comic_triggered()
     qDebug()<<__PRETTY_FUNCTION__<<"triggered";
     if(auto comic = this->ui->view->comicSource())
     {
+        int total = m_openFileList.count();
+        if(total>1){
+            qDebug()<<"find from init open list";
+            auto cur = m_openFileList.indexOf(comic->getFilePath());
+            if(cur == -1){
+                qDebug()<<"unable to find current";
+            }
+            if(cur != -1 && cur+1 < total)
+                this->loadComic({m_openFileList[cur+1]});
+            return;
+        }
         auto filecomic = dynamic_cast<FileComicSource*>(comic);
         if(filecomic){
             if(filecomic->hasNextComic()){
@@ -1603,6 +1626,13 @@ void MainWindow::on_actionPrevious_comic_triggered()
 {
     if(auto comic = this->ui->view->comicSource())
     {
+        int total = m_openFileList.count();
+        if(total>1){
+            auto cur = m_openFileList.indexOf(comic->getPath());
+            if(cur != -1 && cur-1 >= 0)
+                this->loadComic({m_openFileList[cur-1]});
+            return;
+        }
         auto filecomic = dynamic_cast<FileComicSource*>(comic);
         if(filecomic){
             if(filecomic->hasPreviousComic()){

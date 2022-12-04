@@ -151,7 +151,7 @@ private:
     int getAdaptiveScrollPixels(ScrollDirection d);
     void fitLeftRightImageToSize(int width, int height, int combined_width, int combined_height, double& leftScaledWidth, double& rightScaledWidth, double& leftScaledHeight, double& rightScaledHeight);
     void ensureDisplacementWithinAllowedBounds();
-    void emitImageMetadataChangedSignal();
+    void imageMetadataChanged();
         /*
     doublePage, control if load the next page.
      if doublePage ==   1, load.
