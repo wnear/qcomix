@@ -62,6 +62,7 @@ void Thumbnailer::startWorking(ComicSource* src)
     //TODO:
     // auto start = std::min(src->getPageCount(), 20);
     auto start = src->getPageCount();
+    start = 4;
     for(int i = c_num; i < start; i += c_threadCount)
         m_PageNums.enqueue(i);
     this->stopFlag = false;

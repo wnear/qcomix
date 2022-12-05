@@ -55,12 +55,13 @@ public:
 
     virtual ComicMetadata getComicMetadata() const = 0;
     virtual PageMetadata getPageMetadata(int pageNum) = 0;
+    virtual void setPageMetadata(int pageNum, PageMetadata) {}
     virtual bool ephemeral() const;
     virtual int startAtPage() const;
     virtual void resortFiles() {}
     virtual ~ComicSource() {}
 protected:
-        QString id;
+    QString id;
 };
 
 class FileComicSource : public ComicSource
