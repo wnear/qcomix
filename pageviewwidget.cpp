@@ -857,9 +857,10 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
         QPixmap leftBkg, rightBkg;
         if(checkeredBackgroundForTransparency)
         {
-            leftBkg = getCheckeredBackground(imgCache[cacheKey::leftPageTransformed].width(), imgCache[cacheKey::leftPageTransformed].height());
-            if(doublePage)
-                rightBkg = getCheckeredBackground(imgCache[cacheKey::rightPageTransformed].width(), imgCache[cacheKey::rightPageTransformed].height());
+            leftBkg = getCheckeredBackground(imgCache[cacheKey::leftPageTransformed].size());
+            if(doublePage){
+                rightBkg = getCheckeredBackground(imgCache[cacheKey::rightPageTransformed].size());
+            }
         }
         else
         {
@@ -902,7 +903,7 @@ void PageViewWidget::paintEvent(QPaintEvent* event)
 
         if(checkeredBackgroundForTransparency)
         {
-            img_combined = getCheckeredBackground(combined_width, combined_height);
+            img_combined = getCheckeredBackground({combined_width, combined_height});
         }
         else
         {
@@ -1706,13 +1707,13 @@ void PageViewWidget::emitStatusbarUpdateSignal()
     emit this->statusbarUpdate(fitMode, metadata1, metadata2, lastDrawnLeftHeight, lastDrawnRightHeight, swappedLeftRight);
 }
 
-QPixmap PageViewWidget::getCheckeredBackground(const int width, const int height)
+QPixmap PageViewWidget::getCheckeredBackground(const QSize &backgroundsize)
 {
-    QPixmap res(width, height);
+    QPixmap res(backgroundsize);
     QPainter painter(&res);
-    for(int i = 0; i < width; i += CHECKERED_IMAGE_SIZE)
+    for(int i = 0; i < backgroundsize.width(); i += CHECKERED_IMAGE_SIZE)
     {
-        for(int j = 0; j < height; j += CHECKERED_IMAGE_SIZE)
+        for(int j = 0; j < backgroundsize.height(); j += CHECKERED_IMAGE_SIZE)
         {
             painter.drawPixmap(i * CHECKERED_IMAGE_SIZE, j * CHECKERED_IMAGE_SIZE, checkeredBkg);
         }

@@ -226,7 +226,7 @@ private:
     bool slideShowAutoOpenNextComic = false;
     bool mouseCurrentlyOverWidget = false;
     QPoint mousePos;
-    QPixmap getCheckeredBackground(const int width, const int height);
+    QPixmap getCheckeredBackground(const QSize &size);
     QPixmap checkeredBkg;
     enum class cacheKey //in order, invalidating an entry should invalidate all following entries too
     {
