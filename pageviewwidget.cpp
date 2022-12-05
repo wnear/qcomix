@@ -1566,6 +1566,8 @@ bool PageViewWidget::isSinglePageByPageMeta(int pn)
 
     //criteria
     auto meta = m_comic->getPageMetadata(pn);
+    if(meta.isBigPage)
+        return true;
     int w{meta.width}, h{meta.height};
     //isbanner
     if( (w>h && w/h>2) || (w<h) && (h/w>2) )
